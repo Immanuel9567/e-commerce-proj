@@ -1,11 +1,12 @@
 const AppStore = new Store(window.STORE_DATA.products, window.localStorage);
 const $ = id => document.getElementById(id);
 const DOM = {
+  storefrontView: $('storefrontView'), productPage: $('productPage'), productPageContent: $('productPageContent'),
   productGrid: $('productGrid'), resultsCount: $('resultsCount'), searchInput: $('searchInput'), searchClearBtn: $('searchClearBtn'),
   navTabs: document.querySelectorAll('.site-nav-link'), navCartBadge: $('navCartBadge'), categoryPills: document.querySelectorAll('.cat-pill'),
   overlay: $('overlay'), cartDrawer: $('cartDrawer'), cartItemsList: $('cartItemsList'), drawerCount: $('drawerCount'),
   cartSubtotal: $('cartSubtotal'), cartDiscount: $('cartDiscount'), cartDiscountRow: $('cartDiscountRow'), cartShipping: $('cartShipping'), cartTotal: $('cartTotal'),
-  promoInput: $('promoInput'), checkoutTriggerBtn: $('checkoutTriggerBtn'), quickViewModal: $('quickViewModal'), quickViewContent: $('quickViewContent'),
+  promoInput: $('promoInput'), checkoutTriggerBtn: $('checkoutTriggerBtn'),
   wishlistModal: $('wishlistModal'), wishlistItemsList: $('wishlistItemsList'), checkoutModal: $('checkoutModal'), checkoutForm: $('checkoutForm'),
   orderSuccessScreen: $('orderSuccessScreen'), orderTrackingNum: $('orderTrackingNum'), profileModal: $('profileModal'), profileOrders: $('profileOrders'),
   adminModal: $('adminModal'), toastContainer: $('toastContainer'), themeNotice: $('themeNotice'), themeToggleBtn: $('themeToggleBtn'), themeToggleLabel: $('themeToggleLabel')
@@ -52,6 +53,22 @@ function productImage(product, className) {
   return `<img src="${escapeHtml(imageSource(product))}" alt="${escapeHtml(product.title)}" class="${className}" data-fallback-category="${escapeHtml(product.category || 'audio')}" loading="lazy">`;
 }
 
+function productHref(productId) {
+  return `?product=${encodeURIComponent(productId)}`;
+}
+
+function productLinkAttributes(product) {
+  return `href="${escapeHtml(productHref(product.id))}" data-product-link="${escapeHtml(product.id)}"`;
+}
+
+function productRouteId() {
+  return new URLSearchParams(window.location.search).get('product');
+}
+
+function isProductRoute() {
+  return new URLSearchParams(window.location.search).has('product');
+}
+
 function showToast(message, isError = false) {
   const toast = document.createElement('div');
   toast.className = `toast${isError ? ' toast-error' : ''}`;
@@ -86,12 +103,26 @@ function getFilteredProducts() {
 
 function renderProductGrid() {
   const featured = AppStore.products.find(product => product.id === 'aura-01');
-  $('featuredPriceChip').hidden = !featured;
-  if (featured) $('featuredPrice').textContent = money(featured.price);
+  $('featuredHero').hidden = !featured;
+  if (featured) {
+    $('featuredPrice').textContent = money(featured.price);
+    $('featuredProductLink').setAttribute('aria-label', `View ${featured.title}`);
+    const image = $('featuredProductImage');
+    const source = imageSource(featured);
+    image.alt = featured.title;
+    [image, $('featuredProductBackdrop')].forEach(element => {
+      element.dataset.fallbackCategory = featured.category;
+      if (element.dataset.originalSource !== source) {
+        element.dataset.originalSource = source;
+        delete element.dataset.fallbackUsed;
+        element.src = source;
+      }
+    });
+  }
   const products = getFilteredProducts();
   DOM.resultsCount.textContent = `Showing ${products.length} ${products.length === 1 ? 'object' : 'objects'}`;
   if (!products.length) {
-    DOM.productGrid.innerHTML = `<div class="empty-state"><div class="section-kicker">THE COLLECTION</div><h3>No objects found.</h3><p>There are no products matching your search.</p><button type="button" class="nm-btn" id="resetFilterBtn">Reset filters</button></div>`;
+    DOM.productGrid.innerHTML = `<div class="empty-state"><div class="section-kicker">THE COLLECTION</div><h2>No objects found.</h2><p>There are no products matching your search.</p><button type="button" class="nm-btn" id="resetFilterBtn">Reset filters</button></div>`;
     $('resetFilterBtn').addEventListener('click', () => {
       AppStore.searchQuery = '';
       AppStore.activeCategory = 'all';
@@ -110,9 +141,9 @@ function renderProductGrid() {
     return `<article class="product-card" data-id="${id}">
       <div class="card-top"><span class="card-tag">${escapeHtml(unavailable ? 'Out of stock' : (product.badge || 'Collection'))}</span>
         <button type="button" class="wishlist-btn${saved ? ' active' : ''}" data-action="wishlist" data-id="${id}" aria-pressed="${saved}" aria-label="${saved ? 'Remove' : 'Save'} ${escapeHtml(product.title)} ${saved ? 'from' : 'to'} wishlist"><span aria-hidden="true">${saved ? '♥' : '♡'}</span> ${saved ? 'Saved' : 'Save'}</button></div>
-      <button type="button" class="product-img-frame" data-action="quickview" data-id="${id}" aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'product-thumb')}</button>
+      <a class="product-img-frame" ${productLinkAttributes(product)} aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'product-thumb')}</a>
       <div class="product-category">${escapeHtml(product.categoryName)}</div>
-      <h3><button type="button" class="product-title" data-action="quickview" data-id="${id}">${escapeHtml(product.title)}</button></h3>
+      <h2><a class="product-title" ${productLinkAttributes(product)}>${escapeHtml(product.title)}</a></h2>
       <div class="product-rating">${product.rating ? `<span class="stars" aria-hidden="true">★★★★★</span><span><strong>${escapeHtml(product.rating)}</strong></span><span class="rating-count">(${escapeHtml(product.reviewsCount)})</span>` : '<span class="rating-count">New arrival</span>'}</div>
       <div class="card-bottom"><div class="product-price">${product.originalPrice && product.originalPrice > product.price ? `<span class="price-original">${money(product.originalPrice)}</span>` : ''}<span class="price-current">${money(product.price)}</span></div>
         <button type="button" class="add-cart-btn" data-action="add-cart" data-id="${id}" ${remaining <= 0 ? 'disabled' : ''}>${unavailable ? 'Out of stock' : remaining <= 0 ? 'In your bag' : 'Add to bag'}</button></div>
@@ -145,8 +176,8 @@ function renderCartDrawer() {
       const product = AppStore.products.find(p => p.id === item.id);
       if (!product) return '';
       return `<div class="cart-item">
-        <div class="cart-item-img-well">${productImage(product, 'cart-item-img')}</div>
-        <div class="cart-item-details"><h3 class="cart-item-title">${escapeHtml(product.title)}</h3><div class="cart-item-meta">${escapeHtml(item.selectedSize)} <span aria-hidden="true">·</span> <span class="color-dot" style="background:${safeColor(item.selectedColor)}" aria-hidden="true"></span> ${escapeHtml(item.selectedColor)}</div><div class="cart-item-price">${money(product.price)}</div></div>
+        <a class="cart-item-img-well" ${productLinkAttributes(product)} aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'cart-item-img')}</a>
+        <div class="cart-item-details"><h3 class="cart-item-title"><a ${productLinkAttributes(product)}>${escapeHtml(product.title)}</a></h3><div class="cart-item-meta">${escapeHtml(item.selectedSize)} <span aria-hidden="true">·</span> <span class="color-dot" style="background:${safeColor(item.selectedColor)}" aria-hidden="true"></span> ${escapeHtml(item.selectedColor)}</div><div class="cart-item-price">${money(product.price)}</div></div>
         <div class="cart-item-actions"><div class="qty-stepper" aria-label="Quantity"><button type="button" class="qty-btn" data-action="qty-minus" data-index="${index}" aria-label="Decrease quantity of ${escapeHtml(product.title)}">Decrease</button><span class="qty-value">${item.quantity}</span><button type="button" class="qty-btn" data-action="qty-plus" data-index="${index}" aria-label="Increase quantity of ${escapeHtml(product.title)}">Increase</button></div><button type="button" class="text-action danger-text" data-action="remove-cart" data-index="${index}" aria-label="Remove ${escapeHtml(product.title)} from bag">Remove</button></div>
       </div>`;
     }).join('');
@@ -162,60 +193,107 @@ function renderCartDrawer() {
   DOM.promoInput.value = totals.promotion && totals.promotion.code === AppStore.state.appliedPromo ? totals.promotion.code : '';
 }
 
-function renderQuickViewModal(productId) {
-  const product = AppStore.products.find(p => p.id === productId);
-  if (!product) return;
-  const saved = AppStore.isWishlisted(product.id);
-  let selectedColor = product.colors[0];
-  let selectedSize = product.sizes[0];
-  let quantity = 1;
+let productSelection = { id: null, color: null, size: null, quantity: 1 };
+
+function updateProductSaved() {
+  const button = $('productSaveBtn');
+  if (!button || !isProductRoute()) return;
+  const saved = AppStore.isWishlisted(productRouteId());
+  button.classList.toggle('active', saved);
+  button.setAttribute('aria-pressed', String(saved));
+  button.innerHTML = `<span aria-hidden="true">${saved ? '♥' : '♡'}</span> ${saved ? 'Saved' : 'Save'}`;
+}
+
+function updateProductAvailability() {
+  if (!isProductRoute()) return;
+  const product = AppStore.products.find(item => item.id === productRouteId());
+  const addButton = $('productAddToCart');
+  if (!product || !addButton) return;
   const available = Math.max(0, product.stock - AppStore.quantityInCart(product.id));
-  DOM.quickViewContent.innerHTML = `<div class="modal-content-grid">
-    <div class="modal-img-well">${productImage(product, 'modal-img')}</div>
-    <div class="modal-details"><div class="section-kicker">${escapeHtml(product.categoryName)}</div><h2 class="modal-title">${escapeHtml(product.title)}</h2>
-      <div class="modal-price-row"><span class="modal-price">${money(product.price)}</span>${product.originalPrice && product.originalPrice > product.price ? `<span class="price-original">${money(product.originalPrice)}</span>` : ''}</div>
-      <p class="modal-desc">${escapeHtml(product.description)}</p>
-      <div><div class="modal-option-label">Finish</div><div class="swatch-group" id="quickColorSwatches">${product.colors.map((color, index) => `<button type="button" class="color-swatch${index === 0 ? ' active' : ''}" data-color="${escapeHtml(color)}" aria-pressed="${index === 0}"><span class="color-dot" style="background:${safeColor(color)}" aria-hidden="true"></span>${escapeHtml(color)}</button>`).join('')}</div></div>
-      <div><div class="modal-option-label">Size / specification</div><div class="swatch-group" id="quickSizePills">${product.sizes.map((size, index) => `<button type="button" class="size-pill${index === 0 ? ' active' : ''}" data-size="${escapeHtml(size)}" aria-pressed="${index === 0}">${escapeHtml(size)}</button>`).join('')}</div></div>
-      <div class="quick-actions"><div class="qty-stepper"><button type="button" class="qty-btn" id="modalQtyMinus">Decrease</button><span class="qty-value" id="modalQtyVal">1</span><button type="button" class="qty-btn" id="modalQtyPlus">Increase</button></div><button type="button" class="wishlist-btn${saved ? ' active' : ''}" id="modalWishlistBtn" aria-pressed="${saved}"><span aria-hidden="true">${saved ? '♥' : '♡'}</span> ${saved ? 'Saved' : 'Save'}</button></div>
-      <button type="button" class="checkout-btn" id="modalAddToCartBtn" ${available ? '' : 'disabled'}>${available ? `Add to bag · ${money(product.price)}` : product.stock ? 'In your bag' : 'Out of stock'}</button>
-    </div></div>`;
-  const addButton = $('modalAddToCartBtn');
-  const updateAmount = () => { $('modalQtyVal').textContent = quantity; if (available) addButton.textContent = `Add to bag · ${money(product.price * quantity)}`; };
-  $('modalQtyMinus').addEventListener('click', () => { quantity = Math.max(1, quantity - 1); updateAmount(); });
-  $('modalQtyPlus').addEventListener('click', () => { if (quantity < available) quantity++; else showToast('No more of this item are available.', true); updateAmount(); });
-  document.querySelectorAll('#quickColorSwatches .color-swatch').forEach(button => button.addEventListener('click', () => {
-    selectedColor = button.dataset.color;
-    document.querySelectorAll('#quickColorSwatches .color-swatch').forEach(item => { const active = item === button; item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); });
-  }));
-  document.querySelectorAll('#quickSizePills .size-pill').forEach(button => button.addEventListener('click', () => {
-    selectedSize = button.dataset.size;
-    document.querySelectorAll('#quickSizePills .size-pill').forEach(item => { const active = item === button; item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); });
-  }));
-  $('modalWishlistBtn').addEventListener('click', () => {
-    const result = attempt(() => AppStore.toggleWishlist(product.id));
-    if (result === null) return;
-    const button = $('modalWishlistBtn');
-    button.classList.toggle('active', result);
-    button.setAttribute('aria-pressed', String(result));
-    button.innerHTML = `<span aria-hidden="true">${result ? '♥' : '♡'}</span> ${result ? 'Saved' : 'Save'}`;
-    renderProductGrid();
-    showToast(result ? 'Saved to your wishlist' : 'Removed from your wishlist');
-  });
-  addButton.addEventListener('click', () => {
-    const added = attempt(() => AppStore.addToCart(product.id, quantity, { color: selectedColor, size: selectedSize }));
-    if (!added) return;
-    renderProductGrid();
-    renderCartDrawer();
-    openLayer(DOM.cartDrawer);
-    showToast(`${product.title} added to your bag`);
-  });
-  openLayer(DOM.quickViewModal);
+  productSelection.quantity = Math.min(Math.max(1, productSelection.quantity), Math.max(1, available));
+  $('productQtyValue').textContent = productSelection.quantity;
+  $('productQtyMinus').disabled = productSelection.quantity <= 1;
+  $('productQtyPlus').disabled = productSelection.quantity >= available;
+  addButton.disabled = available === 0;
+  addButton.textContent = available ? `Add to bag · ${money(product.price * productSelection.quantity)}` : product.stock ? 'In your bag' : 'Out of stock';
+  $('productStockNote').textContent = available ? 'In stock' : product.stock ? 'All available units are already in your bag.' : 'Currently out of stock.';
+}
+
+function renderProductPage(productId) {
+  const focused = DOM.productPageContent.contains(document.activeElement) ? document.activeElement : null;
+  const focusId = focused && focused.id;
+  const focusColor = focused && focused.dataset.color;
+  const focusSize = focused && focused.dataset.size;
+  const product = AppStore.products.find(item => item.id === productId);
+  if (!product) {
+    document.title = "Product not found | V8's";
+    DOM.productPageContent.innerHTML = `<div class="product-missing"><div class="section-kicker">THE COLLECTION</div><h1 id="productPageTitle" tabindex="-1">Product not found<span class="brand-dot">.</span></h1><p>This item may no longer be available on this device.</p></div>`;
+  } else {
+    if (productSelection.id !== product.id) productSelection = { id: product.id, color: product.colors[0], size: product.sizes[0], quantity: 1 };
+    if (!product.colors.includes(productSelection.color)) productSelection.color = product.colors[0];
+    if (!product.sizes.includes(productSelection.size)) productSelection.size = product.sizes[0];
+    const saved = AppStore.isWishlisted(product.id);
+    const specs = Array.isArray(product.specs) ? product.specs.filter(spec => spec && spec.label != null && spec.value != null && String(spec.label).trim() && String(spec.value).trim()) : [];
+    document.title = `${product.title} | V8's`;
+    DOM.productPageContent.innerHTML = `<article class="product-detail-card">
+      <div class="product-detail-img-well">${productImage(product, 'product-detail-img')}</div>
+      <div class="product-detail-body">
+        <div><div class="section-kicker">${escapeHtml(product.categoryName)}</div><h1 class="product-detail-title" id="productPageTitle" tabindex="-1">${escapeHtml(product.title)}</h1>
+          <div class="product-rating product-detail-rating">${product.rating ? `<span class="stars" aria-hidden="true">★★★★★</span><span><strong>${escapeHtml(product.rating)}</strong> / 5</span><span class="rating-count">(${escapeHtml(product.reviewsCount)} reviews)</span>` : '<span class="rating-count">New arrival</span>'}</div></div>
+        <div class="product-detail-price-row"><span class="product-detail-price">${money(product.price)}</span>${product.originalPrice && product.originalPrice > product.price ? `<span class="price-original">${money(product.originalPrice)}</span>` : ''}</div>
+        <p class="product-detail-desc">${escapeHtml(product.description)}</p>
+        <div><div class="product-option-label" id="productColorLabel">Finish</div><div class="swatch-group" id="productColorSwatches" role="group" aria-labelledby="productColorLabel">${product.colors.map(color => `<button type="button" class="color-swatch${color === productSelection.color ? ' active' : ''}" data-color="${escapeHtml(color)}" aria-pressed="${color === productSelection.color}"><span class="color-dot" style="background:${safeColor(color)}" aria-hidden="true"></span>${escapeHtml(color)}</button>`).join('')}</div></div>
+        <div><div class="product-option-label" id="productSizeLabel">Size / specification</div><div class="swatch-group" id="productSizePills" role="group" aria-labelledby="productSizeLabel">${product.sizes.map(size => `<button type="button" class="size-pill${size === productSelection.size ? ' active' : ''}" data-size="${escapeHtml(size)}" aria-pressed="${size === productSelection.size}">${escapeHtml(size)}</button>`).join('')}</div></div>
+        <div class="product-selection-actions"><div class="qty-stepper" role="group" aria-label="Quantity"><button type="button" class="qty-btn" id="productQtyMinus">Decrease</button><span class="qty-value" id="productQtyValue" aria-live="polite">1</span><button type="button" class="qty-btn" id="productQtyPlus">Increase</button></div><button type="button" class="wishlist-btn${saved ? ' active' : ''}" id="productSaveBtn" aria-pressed="${saved}"><span aria-hidden="true">${saved ? '♥' : '♡'}</span> ${saved ? 'Saved' : 'Save'}</button></div>
+        <button type="button" class="checkout-btn" id="productAddToCart"></button><p class="product-stock-note" id="productStockNote"></p>
+        ${specs.length ? `<section class="product-specs" aria-labelledby="productSpecsHeading"><h2 id="productSpecsHeading">Specifications</h2><dl>${specs.map(spec => `<div><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`).join('')}</dl></section>` : ''}
+      </div>
+    </article>`;
+    updateProductAvailability();
+  }
+  let replacement = focusId ? $(focusId) : null;
+  if (!replacement && focusColor != null) replacement = Array.from(DOM.productPageContent.querySelectorAll('[data-color]')).find(button => button.dataset.color === focusColor);
+  if (!replacement && focusSize != null) replacement = Array.from(DOM.productPageContent.querySelectorAll('[data-size]')).find(button => button.dataset.size === focusSize);
+  if (replacement && !replacement.disabled) replacement.focus({ preventScroll: true });
+  else if (focused) $('productPageTitle').focus({ preventScroll: true });
+}
+
+function renderRoute() {
+  const viewingProduct = isProductRoute();
+  DOM.storefrontView.hidden = viewingProduct;
+  DOM.productPage.hidden = !viewingProduct;
+  $('brandLogo').setAttribute('href', viewingProduct ? './' : '#home');
+  if (viewingProduct) renderProductPage(productRouteId());
+  else document.title = "V8's | Objects for everyday living";
+  setActiveNav(viewingProduct || window.location.hash === '#catalogSection' ? 'shop' : 'home');
+}
+
+function openProductPage(productId) {
+  closeAllModals();
+  if (!isProductRoute() || productRouteId() !== productId) window.history.pushState({}, '', productHref(productId));
+  renderRoute();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  $('productPageTitle').focus({ preventScroll: true });
+}
+
+function goToStorefront(target = 'home', focusCollection = false) {
+  closeAllModals();
+  if (isProductRoute()) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('product');
+    url.hash = target === 'shop' ? 'catalogSection' : 'home';
+    window.history.pushState({}, '', url);
+    renderRoute();
+  }
+  setActiveNav(target);
+  if (target === 'shop') $('catalogSection').scrollIntoView({ behavior: 'smooth' });
+  else window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (focusCollection) $('collectionTitle').focus({ preventScroll: true });
 }
 
 function renderWishlistModal() {
   const items = AppStore.state.wishlist.map(id => AppStore.products.find(product => product.id === id)).filter(Boolean);
-  DOM.wishlistItemsList.innerHTML = items.length ? items.map(product => `<div class="saved-item"><div class="cart-item-img-well">${productImage(product, 'cart-item-img')}</div><div class="cart-item-details"><h3 class="cart-item-title">${escapeHtml(product.title)}</h3><div class="cart-item-price">${money(product.price)}</div></div><div class="saved-actions"><button type="button" class="nm-btn compact" data-action="wishlist-to-cart" data-id="${escapeHtml(product.id)}" ${product.stock - AppStore.quantityInCart(product.id) <= 0 ? 'disabled' : ''}>Add to bag</button><button type="button" class="text-action danger-text" data-action="remove-wishlist" data-id="${escapeHtml(product.id)}">Remove</button></div></div>`).join('') : `<div class="list-empty"><h3>Nothing saved yet.</h3><p>Your saved objects will appear here.</p></div>`;
+  DOM.wishlistItemsList.innerHTML = items.length ? items.map(product => `<div class="saved-item"><a class="cart-item-img-well" ${productLinkAttributes(product)} aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'cart-item-img')}</a><div class="cart-item-details"><h3 class="cart-item-title"><a ${productLinkAttributes(product)}>${escapeHtml(product.title)}</a></h3><div class="cart-item-price">${money(product.price)}</div></div><div class="saved-actions"><button type="button" class="nm-btn compact" data-action="wishlist-to-cart" data-id="${escapeHtml(product.id)}" ${product.stock - AppStore.quantityInCart(product.id) <= 0 ? 'disabled' : ''}>Add to bag</button><button type="button" class="text-action danger-text" data-action="remove-wishlist" data-id="${escapeHtml(product.id)}">Remove</button></div></div>`).join('') : `<div class="list-empty"><h3>Nothing saved yet.</h3><p>Your saved objects will appear here.</p></div>`;
 }
 
 function renderProfile() {
@@ -275,8 +353,12 @@ function closeAllModals() {
   activeLayer = null;
   DOM.overlay.classList.remove('open');
   unlockPage();
-  setActiveNav('home');
-  if (previousFocus && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+  setActiveNav(isProductRoute() || window.location.hash === '#catalogSection' ? 'shop' : 'home');
+  if (previousFocus && previousFocus.isConnected && !previousFocus.disabled) previousFocus.focus({ preventScroll: true });
+  else if (isProductRoute()) {
+    const fallback = $('productSaveBtn') || $('productPageTitle');
+    if (fallback) fallback.focus({ preventScroll: true });
+  }
   previousFocus = null;
 }
 
@@ -429,6 +511,7 @@ function refreshStorefront() {
   renderProductGrid();
   renderCartDrawer();
   renderProfile();
+  if (isProductRoute()) renderProductPage(productRouteId());
   if (activeLayer === DOM.wishlistModal) renderWishlistModal();
 }
 
@@ -482,30 +565,49 @@ function updatePromotionFields() {
 }
 
 function initEventListeners() {
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[data-product-link], a[data-storefront-link]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+    event.preventDefault();
+    if (link.dataset.productLink !== undefined) openProductPage(link.dataset.productLink);
+    else goToStorefront(link.dataset.storefrontLink, true);
+  });
+  window.addEventListener('popstate', () => { closeAllModals(); renderRoute(); });
   DOM.navTabs.forEach(tab => tab.addEventListener('click', () => {
     const target = tab.dataset.tab;
-    if (target === 'home' || target === 'shop') {
-      closeAllModals();
-      setActiveNav(target);
-      if (target === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
-      else $('catalogSection').scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
+    if (target === 'home' || target === 'shop') { goToStorefront(target); return; }
     setActiveNav(target);
     if (target === 'cart') { renderCartDrawer(); openLayer(DOM.cartDrawer); }
     if (target === 'wishlist') { renderWishlistModal(); openLayer(DOM.wishlistModal); }
     if (target === 'profile') { renderProfile(); openLayer(DOM.profileModal); }
     if (target === 'admin') { renderAdminPanel(); openLayer(DOM.adminModal); }
   }));
-  $('brandLogo').addEventListener('click', () => { closeAllModals(); setActiveNav('home'); });
-  ['cartCloseBtn', 'quickViewCloseBtn', 'wishlistCloseBtn', 'checkoutCloseBtn', 'profileCloseBtn', 'adminCloseBtn'].forEach(id => $(id).addEventListener('click', closeAllModals));
+  $('brandLogo').addEventListener('click', event => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (isProductRoute()) { event.preventDefault(); goToStorefront('home'); }
+    else { closeAllModals(); setActiveNav('home'); }
+  });
+  ['cartCloseBtn', 'wishlistCloseBtn', 'checkoutCloseBtn', 'profileCloseBtn', 'adminCloseBtn'].forEach(id => $(id).addEventListener('click', closeAllModals));
   DOM.overlay.addEventListener('click', closeAllModals);
   DOM.categoryPills.forEach(pill => pill.addEventListener('click', () => { AppStore.activeCategory = pill.dataset.category; updateCategories(); renderProductGrid(); }));
-  DOM.searchInput.addEventListener('input', event => { AppStore.searchQuery = event.target.value; DOM.searchClearBtn.classList.toggle('visible', !!event.target.value); renderProductGrid(); });
-  DOM.searchClearBtn.addEventListener('click', () => { DOM.searchInput.value = ''; AppStore.searchQuery = ''; DOM.searchClearBtn.classList.remove('visible'); renderProductGrid(); DOM.searchInput.focus(); });
+  DOM.searchInput.addEventListener('input', event => {
+    AppStore.searchQuery = event.target.value;
+    DOM.searchClearBtn.classList.toggle('visible', !!event.target.value);
+    if (isProductRoute()) goToStorefront('shop');
+    renderProductGrid();
+  });
+  DOM.searchClearBtn.addEventListener('click', () => {
+    DOM.searchInput.value = ''; AppStore.searchQuery = ''; DOM.searchClearBtn.classList.remove('visible');
+    if (isProductRoute()) goToStorefront('shop');
+    renderProductGrid(); DOM.searchInput.focus();
+  });
   DOM.productGrid.addEventListener('click', event => {
     const button = event.target.closest('[data-action]');
-    if (!button) return;
+    if (!button) {
+      const card = event.target.closest('.product-card');
+      if (card && !event.target.closest('a') && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) openProductPage(card.dataset.id);
+      return;
+    }
     const id = button.dataset.id;
     if (button.dataset.action === 'wishlist') {
       const result = attempt(() => AppStore.toggleWishlist(id));
@@ -513,7 +615,33 @@ function initEventListeners() {
     } else if (button.dataset.action === 'add-cart') {
       const product = attempt(() => AppStore.addToCart(id));
       if (product) { renderProductGrid(); renderCartDrawer(); showToast(`${product.title} added to your bag`); }
-    } else if (button.dataset.action === 'quickview') renderQuickViewModal(id);
+    }
+  });
+  DOM.productPageContent.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button || !isProductRoute()) return;
+    if (button.dataset.color !== undefined || button.dataset.size !== undefined) {
+      const isColor = button.dataset.color !== undefined;
+      if (isColor) productSelection.color = button.dataset.color;
+      else productSelection.size = button.dataset.size;
+      button.parentElement.querySelectorAll('button').forEach(option => {
+        const selected = option === button;
+        option.classList.toggle('active', selected);
+        option.setAttribute('aria-pressed', String(selected));
+      });
+    } else if (button.id === 'productQtyMinus' || button.id === 'productQtyPlus') {
+      productSelection.quantity += button.id === 'productQtyPlus' ? 1 : -1;
+      updateProductAvailability();
+    } else if (button.id === 'productSaveBtn') {
+      const saved = attempt(() => AppStore.toggleWishlist(productSelection.id));
+      if (saved !== null) { updateProductSaved(); renderProductGrid(); showToast(saved ? 'Saved to your wishlist' : 'Removed from your wishlist'); }
+    } else if (button.id === 'productAddToCart') {
+      const product = attempt(() => AppStore.addToCart(productSelection.id, productSelection.quantity, { color: productSelection.color, size: productSelection.size }));
+      if (product) {
+        renderProductGrid(); renderCartDrawer(); openLayer(DOM.cartDrawer); updateProductAvailability();
+        showToast(`${product.title} added to your bag`);
+      }
+    }
   });
   DOM.cartItemsList.addEventListener('click', event => {
     const button = event.target.closest('[data-action]');
@@ -525,7 +653,7 @@ function initEventListeners() {
       if (button.dataset.action === 'remove-cart') AppStore.removeFromCart(index);
       return true;
     });
-    if (result) { renderCartDrawer(); renderProductGrid(); }
+    if (result) { renderCartDrawer(); renderProductGrid(); updateProductAvailability(); }
   });
   DOM.wishlistItemsList.addEventListener('click', event => {
     const button = event.target.closest('[data-action]');
@@ -536,7 +664,7 @@ function initEventListeners() {
     }
     if (button.dataset.action === 'remove-wishlist') {
       const result = attempt(() => AppStore.toggleWishlist(button.dataset.id));
-      if (result !== null) { renderWishlistModal(); renderProductGrid(); showToast('Removed from your wishlist'); }
+      if (result !== null) { renderWishlistModal(); renderProductGrid(); updateProductSaved(); showToast('Removed from your wishlist'); }
     }
   });
   $('promoApplyBtn').addEventListener('click', () => {
@@ -580,7 +708,7 @@ function initEventListeners() {
     $('continueShoppingBtn').focus();
     showToast('Order saved');
   });
-  $('continueShoppingBtn').addEventListener('click', () => { closeAllModals(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('continueShoppingBtn').addEventListener('click', () => goToStorefront('home'));
   DOM.themeToggleBtn.addEventListener('click', () => {
     const isDark = document.body.classList.toggle('dark-mode');
     updateThemeControl(isDark);
@@ -705,3 +833,4 @@ renderProductGrid();
 renderCartDrawer();
 initSortDropdown();
 initEventListeners();
+renderRoute();

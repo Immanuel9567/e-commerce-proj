@@ -40,64 +40,68 @@
   </header>
 
   <main id="home">
-    <section class="hero-section">
-      <div class="container">
-        <div class="hero-card">
-          <div class="hero-content">
-            <div class="eyebrow"><span></span> THE EVERYDAY COLLECTION</div>
-            <h1 class="hero-title">Objects made for the way you live.</h1>
-            <p class="hero-desc">Thoughtful design, considered details, and a little more beauty in the everyday.</p>
-            <div class="hero-cta-group">
-              <a class="nm-btn-black hero-cta" href="#catalogSection">Explore the collection <span aria-hidden="true">↗</span></a>
-              <div class="hero-price-chip" id="featuredPriceChip">
-                <span class="hero-price-label">Featured audio</span>
-                <span class="hero-price-value"><span id="featuredPrice">$299</span> <small>USD</small></span>
+    <div id="storefrontView">
+      <section class="hero-section" id="featuredHero">
+        <div class="container">
+          <div class="hero-card">
+            <div class="hero-visual">
+              <div class="hero-img-well">
+                <a href="?product=aura-01" class="hero-product-link" id="featuredProductLink" data-product-link="aura-01" aria-label="View AURA ANC Over-Ear">
+                  <img src="assets/images/hero_headphones.jpg" alt="" aria-hidden="true" class="hero-product-backdrop" id="featuredProductBackdrop" data-fallback-category="audio">
+                  <img src="assets/images/hero_headphones.jpg" alt="AURA wireless over-ear headphones" class="hero-product-img" id="featuredProductImage" data-fallback-category="audio">
+                  <span class="hero-price-chip" id="featuredPriceChip">
+                    <span class="hero-price-label">Featured audio</span>
+                    <span class="hero-price-value"><span id="featuredPrice">$299</span> <small>USD</small></span>
+                  </span>
+                  <span class="hero-spec-pill"><span class="spec-dot" aria-hidden="true"></span> 40mm drivers</span>
+                </a>
+              </div>
+              <span class="hero-caption">01 / SOUND, SIMPLIFIED</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-section" id="catalogSection" aria-label="Product collection">
+        <div class="container">
+          <div class="collection-heading">
+            <div><div class="section-kicker">THE COLLECTION</div><h1 id="collectionTitle" tabindex="-1">Considered essentials<span class="brand-dot">.</span></h1></div>
+            <p>Made to be used. Designed to be kept.</p>
+          </div>
+          <div class="controls-wrapper">
+            <nav class="category-pills" aria-label="Product categories">
+              <button type="button" class="cat-pill active" data-category="all" aria-pressed="true">All objects</button>
+              <button type="button" class="cat-pill" data-category="audio" aria-pressed="false">Audio</button>
+              <button type="button" class="cat-pill" data-category="timepieces" aria-pressed="false">Timepieces</button>
+              <button type="button" class="cat-pill" data-category="footwear" aria-pressed="false">Footwear</button>
+              <button type="button" class="cat-pill" data-category="living" aria-pressed="false">Living &amp; Decor</button>
+              <button type="button" class="cat-pill" data-category="tech" aria-pressed="false">Workspace &amp; Tech</button>
+            </nav>
+            <div class="sort-wrapper">
+              <span class="sort-label">Sort</span>
+              <div class="sort-custom" id="sortCustom">
+                <button type="button" class="sort-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="sortMenu">
+                  <span id="sortLabel">Featured first</span><span class="sort-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <ul class="sort-menu" id="sortMenu" role="listbox" aria-label="Sort products" hidden>
+                  <li role="presentation"><button type="button" class="sort-option active" role="option" aria-selected="true" data-value="featured">Featured first</button></li>
+                  <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-low">Price: low to high</button></li>
+                  <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-high">Price: high to low</button></li>
+                  <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="rating">Top rated</button></li>
+                </ul>
               </div>
             </div>
           </div>
-          <div class="hero-visual">
-            <div class="hero-img-well">
-              <img src="assets/images/hero_headphones.jpg" alt="AURA wireless over-ear headphones" class="hero-product-img">
-              <div class="hero-spec-pill"><span class="spec-dot" aria-hidden="true"></span> 40mm drivers</div>
-            </div>
-            <span class="hero-caption">01 / SOUND, SIMPLIFIED</span>
-          </div>
+          <div class="results-meta" id="resultsCount" aria-live="polite"></div>
+          <div class="product-grid" id="productGrid"></div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <section class="controls-section" id="catalogSection" aria-label="Product collection">
+    <section class="product-page" id="productPage" aria-labelledby="productPageTitle" hidden>
       <div class="container">
-        <div class="collection-heading">
-          <div><div class="section-kicker">THE COLLECTION</div><h2>Considered essentials<span class="brand-dot">.</span></h2></div>
-          <p>Made to be used. Designed to be kept.</p>
-        </div>
-        <div class="controls-wrapper">
-          <nav class="category-pills" aria-label="Product categories">
-            <button type="button" class="cat-pill active" data-category="all" aria-pressed="true">All objects</button>
-            <button type="button" class="cat-pill" data-category="audio" aria-pressed="false">Audio</button>
-            <button type="button" class="cat-pill" data-category="timepieces" aria-pressed="false">Timepieces</button>
-            <button type="button" class="cat-pill" data-category="footwear" aria-pressed="false">Footwear</button>
-            <button type="button" class="cat-pill" data-category="living" aria-pressed="false">Living &amp; Decor</button>
-            <button type="button" class="cat-pill" data-category="tech" aria-pressed="false">Workspace &amp; Tech</button>
-          </nav>
-          <div class="sort-wrapper">
-            <span class="sort-label">Sort</span>
-            <div class="sort-custom" id="sortCustom">
-              <button type="button" class="sort-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="sortMenu">
-                <span id="sortLabel">Featured first</span><span class="sort-chevron" aria-hidden="true">⌄</span>
-              </button>
-              <ul class="sort-menu" id="sortMenu" role="listbox" aria-label="Sort products" hidden>
-                <li role="presentation"><button type="button" class="sort-option active" role="option" aria-selected="true" data-value="featured">Featured first</button></li>
-                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-low">Price: low to high</button></li>
-                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-high">Price: high to low</button></li>
-                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="rating">Top rated</button></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="results-meta" id="resultsCount" aria-live="polite"></div>
-        <div class="product-grid" id="productGrid"></div>
+        <a href="./#catalogSection" class="product-back-link" data-storefront-link="shop"><span aria-hidden="true">←</span> Back to collection</a>
+        <div id="productPageContent"></div>
       </div>
     </section>
   </main>
@@ -123,11 +127,6 @@
       <button type="button" class="checkout-btn" id="checkoutTriggerBtn">Continue to checkout <span aria-hidden="true">→</span></button>
     </div>
   </aside>
-
-  <div class="modal" id="quickViewModal" role="dialog" aria-modal="true" aria-label="Product details" aria-hidden="true" tabindex="-1">
-    <button type="button" class="text-close modal-close-btn" id="quickViewCloseBtn"><span aria-hidden="true">×</span> Close</button>
-    <div id="quickViewContent"></div>
-  </div>
 
   <div class="modal list-modal" id="wishlistModal" role="dialog" aria-modal="true" aria-labelledby="wishlistTitle" aria-hidden="true" tabindex="-1">
     <button type="button" class="text-close modal-close-btn" id="wishlistCloseBtn"><span aria-hidden="true">×</span> Close</button>

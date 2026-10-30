@@ -4,6 +4,31 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-10-30
 
+### Added and changed — product details and hero
+
+- Replaced the product quick-view modal with a responsive, full details page at a reloadable `?product=<id>` URL. Product images and titles in the collection, featured hero, saved items and bag now link to it, with normal keyboard, new-tab and browser-history behavior.
+- Added product descriptions, prices, ratings and available specifications alongside finish, size, quantity, saved-item and bag controls. Availability reflects local inventory and bag changes; missing products have a clear return-to-collection state. Search, Home and Shop continue to work from a product page.
+- Selected variants now use checkout's inverse theme colors: black with white text in light mode, and white with black text in dark mode. Removed the everyday-collection badge, headline, description and Explore CTA while retaining the featured image and metadata in a simplified hero.
+- Updated the contributor guardrails and README. The URL does not synchronize local data: products created or edited in Admin still exist only in that browser. These changes have not been deployed to the public Vercel site.
+
+### Verification — product details and hero
+
+- The initial focused tests failed against the old hero and modal as expected. A later link test's ambiguous locator was corrected, and a 320px hero-metadata overlap was fixed.
+- Headless Chromium intermittently failed to create a new tab after an unprevented trusted Ctrl/middle click. The stable test verifies the modified click is not intercepted and opens the actual link in another page; it passed 20 repeated runs. Native new-tab clicks also succeeded in individual runs but were unreliable in this sandbox.
+- `npm test` passed **8/8** business-logic tests. `LD_LIBRARY_PATH=/tmp/al2023/lib:$LD_LIBRARY_PATH PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/chromium npm run test:e2e` passed **37/37** browser tests in sandbox Chromium, including all 14 built-in product links, variant checkout, search, history, new tabs, keyboard focus, stock, missing products, local-product links and cross-tab updates.
+- Reviewed light/dark desktop and mobile screenshots and checked layout geometry from 320px to 1365px. JavaScript syntax, documentation links, duplicate DOM IDs and `git diff --check` passed. No physical-device or public-deployment test was performed.
+
+### Fixed — blue tap highlight
+
+- Disabled the browser's default tap-highlight overlay across the storefront and admin, including nested and dynamically rendered controls. The existing visible keyboard-focus indicator and subtle UI glow remain available.
+- Updated the contributor guardrail so future changes preserve this behavior. This follow-up has not been deployed to the public Vercel site.
+
+### Verification — blue tap highlight
+
+- Before the fix, mobile Chromium emulation reported the browser's default blue `rgba(51, 181, 229, 0.4)` tap highlight and the new regression test failed as expected. After the fix, nested storefront/admin controls use a transparent tap highlight; simulated taps and keyboard focus were verified.
+- `npm test` passed **8/8** business-logic tests. `LD_LIBRARY_PATH=/tmp/al2023/lib:$LD_LIBRARY_PATH PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/chromium npm run test:e2e` passed **22/22** browser tests using sandbox Chromium. No physical-device test was performed.
+- JavaScript syntax checks and `git diff --check` passed.
+
 ### Changed — mobile navigation pill
 
 - Changed the mobile bottom navigation from a full-width bar to a floating, rounded pill, with a pressed-style active tab and space for device safe areas. Desktop navigation remains unchanged.
