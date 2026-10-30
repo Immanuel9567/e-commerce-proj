@@ -8,6 +8,8 @@ npm start
 
 Open `http://localhost:8000` and use **Admin** in the main navigation. Products, bag contents, saved items, promotions, customers, order references, inventory and order statuses are stored in this browser's local storage. Existing `aura_cart` and `aura_wishlist` data are imported on first use.
 
+Product images and titles open a full details page at a reloadable URL such as `/?product=aura-01`. The built-in products can be opened from those links in another browser, but locally added or edited products do not sync: a link to a locally added product may show “Product not found” elsewhere, and edits to built-in products remain local.
+
 ## Hosted demo
 
 The public demo is at **https://e-commerce-proj-umber.vercel.app/**. The Vercel project is linked to this GitHub repository and lists `main` as its production branch. Changes on a session branch do not appear on the public site until they are merged or explicitly deployed to production. See the [changelog](CHANGELOG.md) for deployment history and status.
