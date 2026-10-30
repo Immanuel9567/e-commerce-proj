@@ -26,7 +26,7 @@ Some entries in the source catalogue are truncated, interleaved or unrelated to 
 
 ## Product and security guardrails
 
-- Preserve explicitly requested UI behavior unless the owner changes it: no hints/example comments in the interface and no header cart or wishlist icons. Use labeled bottom navigation on mobile and top navigation on desktop. Keep visible text labels for icons on all screen sizes, subtle glow rather than hover pop, a minimal brand-badge shadow, and no embossed “studio” text.
+- Preserve explicitly requested UI behavior unless the owner changes it: no hints/example comments in the interface and no header cart or wishlist icons. Use labeled, floating pill-shaped bottom navigation on mobile and top navigation on desktop. Keep visible text labels for icons on all screen sizes, subtle glow rather than hover pop, a minimal brand-badge shadow, and no embossed “studio” text.
 - Keep mobile product cards in two columns, retain an accessible search label without visible leading label text, and show theme-change feedback as a borderless gradient that fades at the top right.
 - Keep checkout fields blank, selected-payment styling appropriately inverted by theme, and background scrolling locked while the cart is open. New saved order references must remain visible in the profile.
 - Browser storage is neither a security boundary nor a shared database. Do not describe the local admin, checkout or refunds as production-ready or imply real money has moved.

@@ -4,6 +4,18 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-10-30
 
+### Changed — mobile navigation pill
+
+- Changed the mobile bottom navigation from a full-width bar to a floating, rounded pill, with a pressed-style active tab and space for device safe areas. Desktop navigation remains unchanged.
+- Reserved space below the page and raised other notifications so the pill does not obstruct the footer or overlap toast messages. Updated the agent guardrail to preserve the pill shape.
+- This follow-up has not been deployed to the public Vercel site.
+
+### Verification — mobile navigation pill
+
+- The new pill-geometry check failed against the original full-width bar as expected. A theme-color check initially sampled too early and was corrected to wait for the style update.
+- `npm test` passed **8/8** business-logic tests. `LD_LIBRARY_PATH=/tmp/al2023/lib:$LD_LIBRARY_PATH PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/chromium npm run test:e2e` passed **20/20** browser tests using sandbox Chromium.
+- Checked the pill, touch targets, footer spacing, keyboard navigation and panel interactions from 320px to 680px; reviewed screenshots in light and dark themes. JavaScript syntax and `git diff --check` also passed.
+
 ### Changed — mobile UI follow-up
 
 - Restored fixed, labeled bottom navigation on mobile while retaining the desktop top navigation. This supersedes the earlier removal of the bottom navigation; all six storefront sections remain available, with room for the bottom safe area.
