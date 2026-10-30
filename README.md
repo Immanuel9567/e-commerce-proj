@@ -10,7 +10,7 @@ Open `http://localhost:8000` and use **Admin** in the main navigation. Products,
 
 ## Hosted demo
 
-The public demo is at **https://e-commerce-proj-umber.vercel.app/**. The Vercel project is linked to this GitHub repository. Its initial production deployment came from the session branch; `main` has not been updated. Vercel lists `main` as the production branch, so a future production deployment from `main` could replace the current site until these changes are merged. See the [changelog](CHANGELOG.md) for the verified deployment source and status.
+The public demo is at **https://e-commerce-proj-umber.vercel.app/**. The Vercel project is linked to this GitHub repository and lists `main` as its production branch. Changes on a session branch do not appear on the public site until they are merged or explicitly deployed to production. See the [changelog](CHANGELOG.md) for deployment history and status.
 
 Hosting does not synchronize browser-local data or process payments. The public URL is an unauthenticated demo; do not enter real customer or payment information.
 

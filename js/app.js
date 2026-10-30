@@ -8,7 +8,7 @@ const DOM = {
   promoInput: $('promoInput'), checkoutTriggerBtn: $('checkoutTriggerBtn'), quickViewModal: $('quickViewModal'), quickViewContent: $('quickViewContent'),
   wishlistModal: $('wishlistModal'), wishlistItemsList: $('wishlistItemsList'), checkoutModal: $('checkoutModal'), checkoutForm: $('checkoutForm'),
   orderSuccessScreen: $('orderSuccessScreen'), orderTrackingNum: $('orderTrackingNum'), profileModal: $('profileModal'), profileOrders: $('profileOrders'),
-  adminModal: $('adminModal'), toastContainer: $('toastContainer'), themeToggleBtn: $('themeToggleBtn'), themeToggleLabel: $('themeToggleLabel')
+  adminModal: $('adminModal'), toastContainer: $('toastContainer'), themeNotice: $('themeNotice'), themeToggleBtn: $('themeToggleBtn'), themeToggleLabel: $('themeToggleLabel')
 };
 
 const money = value => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
@@ -58,6 +58,15 @@ function showToast(message, isError = false) {
   toast.textContent = message;
   DOM.toastContainer.appendChild(toast);
   setTimeout(() => toast.remove(), 3200);
+}
+
+let themeNoticeTimer;
+
+function showThemeNotice(isDark) {
+  clearTimeout(themeNoticeTimer);
+  DOM.themeNotice.textContent = isDark ? 'Dark mode enabled' : 'Light mode enabled';
+  DOM.themeNotice.classList.add('visible');
+  themeNoticeTimer = setTimeout(() => DOM.themeNotice.classList.remove('visible'), 2600);
 }
 
 function attempt(action) {
@@ -576,7 +585,7 @@ function initEventListeners() {
     const isDark = document.body.classList.toggle('dark-mode');
     updateThemeControl(isDark);
     try { localStorage.setItem('aura_theme', isDark ? 'dark' : 'light'); } catch (_) { }
-    showToast(isDark ? 'Dark mode enabled' : 'Light mode enabled');
+    showThemeNotice(isDark);
   });
   document.querySelectorAll('.admin-tab').forEach(tab => tab.addEventListener('click', () => {
     document.querySelectorAll('.admin-tab').forEach(item => { item.classList.toggle('active', item === tab); if (item === tab) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); });
