@@ -1,8 +1,8 @@
 const PRODUCTS = [
   {
     id: 'aura-01',
-    title: 'AURA Studio ANC Over-Ear',
-    name: 'AURA Studio ANC Over-Ear',
+    title: 'AURA ANC Over-Ear',
+    name: 'AURA ANC Over-Ear',
     category: 'audio',
     categoryName: 'Tech & Audio',
     price: 299,
@@ -155,7 +155,7 @@ const PRODUCTS = [
     reviewsCount: 63,
     badge: 'Design Award',
     image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=700&q=80',
-    description: 'Ultra-slim curved monolithic LED light bar with smooth touch capacitive neumorphic dimming slider. Ra95 natural sunlight spectrum reproduction.',
+    description: 'Ultra-slim curved monolithic LED light bar with smooth touch capacitive dimming slider. Ra95 natural sunlight spectrum reproduction.',
     specs: [
       { label: 'Light Engine', value: 'Ra95 CRI LED' },
       { label: 'Color Temp', value: '2700K - 6500K Tunable' },
