@@ -19,6 +19,10 @@ This file records meaningful repository changes and the checks that support them
 
 - Added a planning-only [roadmap](ROADMAP.md), [mind map](MINDMAP.md), [agent/contributor instructions](agent.md), [agent discovery pointer](AGENTS.md) and this changelog, using the recoverable guidance in `.for agent`. No roadmap implementation phase has been started.
 
+### Deployment
+
+- Created the `e-commerce-proj` Vercel project and linked the GitHub repository. The first production API request was rejected because Vercel requires initial project settings that the connector could not provide; deployment is pending while the Git integration is used to initialize the project.
+
 ### Verification
 
 - `npm test` passed **8/8** business-logic tests.
