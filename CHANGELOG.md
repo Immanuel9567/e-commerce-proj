@@ -21,13 +21,15 @@ This file records meaningful repository changes and the checks that support them
 
 ### Deployment
 
-- Created the `e-commerce-proj` Vercel project and linked the GitHub repository. The first production API request was rejected because Vercel requires initial project settings that the connector could not provide; deployment is pending while the Git integration is used to initialize the project.
+- Created the `e-commerce-proj` Vercel project and linked the GitHub repository. The public production demo is https://e-commerce-proj-umber.vercel.app/; Vercel reported it **READY** and **PROMOTED** from session-branch commit `88a0372abf0cb369e821debfa12418f7149ae050`. `main` was not changed. The project's configured production branch is `main`; future deployments from it can replace the demo until this work is merged.
+- The first production API request was rejected because Vercel requires initial project settings that the connector could not provide. A Git-triggered deployment initialized and published the project instead. The public project domain was accessible without a login; the generated deployment-specific URL was protected by Vercel sign-in.
 
 ### Verification
 
 - `npm test` passed **8/8** business-logic tests.
 - `LD_LIBRARY_PATH=/tmp/al2023/lib:$LD_LIBRARY_PATH PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/chromium npm run test:e2e` passed **9/9** browser tests in this sandbox. Other environments can use Playwright's installed Chromium as described in the README.
 - `node --check` passed for the application scripts and unit test; the documentation's relative links and `git diff --check` passed.
+- An external page fetch loaded the public site with 14 rendered products, and the hosted CSS and application scripts were reachable. An external image metadata service fetched all six locally hosted JPEGs successfully. Vercel's deployment file-tree API returned 404; direct sandbox `curl` access to Vercel was blocked by network restrictions, so interactive browser tests were run locally rather than against the public domain.
 
 ### Known limitations
 

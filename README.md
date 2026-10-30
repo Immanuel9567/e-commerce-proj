@@ -8,6 +8,12 @@ npm start
 
 Open `http://localhost:8000` and use **Admin** in the main navigation. Products, bag contents, saved items, promotions, customers, order references, inventory and order statuses are stored in this browser's local storage. Existing `aura_cart` and `aura_wishlist` data are imported on first use.
 
+## Hosted demo
+
+The public demo is at **https://e-commerce-proj-umber.vercel.app/**. The Vercel project is linked to this GitHub repository. Its initial production deployment came from the session branch; `main` has not been updated. Vercel lists `main` as the production branch, so a future production deployment from `main` could replace the current site until these changes are merged. See the [changelog](CHANGELOG.md) for the verified deployment source and status.
+
+Hosting does not synchronize browser-local data or process payments. The public URL is an unauthenticated demo; do not enter real customer or payment information.
+
 Promotions can be percentage or fixed-amount codes, or automatic sales with optional start and end dates. Discounts apply to the subtotal, not shipping; a manually applied code takes precedence over automatic sales, which do not stack.
 
 ## Important limitations
