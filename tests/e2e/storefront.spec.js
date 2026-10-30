@@ -17,7 +17,7 @@ async function openBag(page) {
 
 test('sort menu follows each theme, sorts correctly and has keyboard support', async ({ page }) => {
   await load(page);
-  await expect(page.locator('.bottom-pill-nav')).toHaveCount(0);
+  await expect(page.locator('.site-nav')).not.toHaveCSS('position', 'fixed');
   await expect(page.locator('.site-header svg')).toHaveCount(0);
   await page.locator('#sortTrigger').click();
   await expect(page.locator('#sortMenu')).toBeVisible();
@@ -26,7 +26,9 @@ test('sort menu follows each theme, sorts correctly and has keyboard support', a
   await page.getByRole('option', { name: 'Price: low to high' }).click();
   await expect(page.locator('.product-card').first().locator('.price-current')).toHaveText('$48.00');
   await page.locator('#themeToggleBtn').click();
-  await expect(page.locator('.toast').last()).toHaveText('Dark mode enabled');
+  await expect(page.locator('#themeNotice')).toHaveText('Dark mode enabled');
+  await expect(page.locator('#themeNotice')).toHaveClass(/visible/);
+  await expect(page.locator('#themeNotice')).toHaveCSS('opacity', '1');
   await page.locator('#sortTrigger').click();
   const darkMenu = await page.locator('#sortMenu').evaluate(el => getComputedStyle(el).backgroundColor);
   expect(darkMenu).not.toBe(lightMenu);
@@ -226,4 +228,108 @@ async function completeCheckoutFromOpenForm(page) {
   await page.locator('#confirmPayBtn').click();
   await expect(page.locator('#orderSuccessScreen')).toBeVisible();
   return (await page.locator('#orderTrackingNum').textContent()).trim();
+}
+
+test('search has an accessible label without a visible leading label', async ({ page }) => {
+  await load(page);
+  const search = page.getByRole('searchbox', { name: 'Search' });
+  await expect(search).toBeVisible();
+  await expect(page.locator('label[for="searchInput"]')).toHaveClass(/visually-hidden/);
+  await search.fill('chronograph');
+  await expect(page.locator('.product-card')).toHaveCount(1);
+  await page.locator('#searchClearBtn').click();
+  await expect(search).toHaveValue('');
+  await expect(page.locator('.product-card')).toHaveCount(14);
+});
+
+for (const width of [320, 390, 420, 421, 480, 680]) {
+  test(`mobile navigation and two-column products fit at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await load(page);
+    const nav = page.locator('.site-nav');
+    await expect(nav).toHaveCSS('position', 'fixed');
+    const navBox = await nav.boundingBox();
+    expect(navBox.x).toBeGreaterThanOrEqual(0);
+    expect(navBox.x + navBox.width).toBeLessThanOrEqual(width);
+    expect(navBox.y).toBeGreaterThan(700);
+    expect(navBox.y + navBox.height).toBeCloseTo(844, 0);
+    for (const name of ['Home', 'Shop', 'Saved', 'Bag', 'Account', 'Admin']) {
+      const button = nav.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+      await expect(button).toBeVisible();
+      const box = await button.boundingBox();
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5);
+    }
+    const cards = await page.locator('.product-card').evaluateAll(elements => elements.slice(0, 4).map(element => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x, y: rect.y, right: rect.right, width: rect.width };
+    }));
+    expect(cards).toHaveLength(4);
+    expect(cards[0].y).toBeCloseTo(cards[1].y, 0);
+    expect(cards[1].x).toBeGreaterThan(cards[0].x);
+    expect(cards[2].y).toBeGreaterThan(cards[0].y);
+    expect(cards[2].y).toBeCloseTo(cards[3].y, 0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    const overflow = await page.locator('.product-card').evaluateAll(elements => elements.flatMap(card => {
+      const outer = card.getBoundingClientRect();
+      return Array.from(card.querySelectorAll('.wishlist-btn, .product-title, .stars, .rating-count, .card-bottom, .add-cart-btn'))
+        .filter(element => {
+          const box = element.getBoundingClientRect();
+          return box.left < outer.left - 1 || box.right > outer.right + 1 || element.scrollWidth > element.clientWidth + 1;
+        }).map(element => element.className);
+    }));
+    expect(overflow).toEqual([]);
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+    const footer = await page.locator('.footer-content').boundingBox();
+    expect(footer.y + footer.height).toBeLessThan(navBox.y);
+  });
+}
+
+test('mobile bottom navigation opens all storefront panels', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await load(page);
+  const nav = page.locator('.site-nav');
+  await nav.getByRole('button', { name: 'Shop' }).click();
+  await expect(nav.getByRole('button', { name: 'Shop' })).toHaveAttribute('aria-current', 'page');
+  for (const [button, panel, close] of [
+    ['Saved', '#wishlistModal', '#wishlistCloseBtn'],
+    [/^Bag\b/, '#cartDrawer', '#cartCloseBtn'],
+    ['Account', '#profileModal', '#profileCloseBtn'],
+    ['Admin', '#adminModal', '#adminCloseBtn']
+  ]) {
+    await nav.getByRole('button', { name: button }).click();
+    await expect(page.locator(panel)).toHaveClass(/open/);
+    await page.locator(close).click();
+    await expect(page.locator(panel)).not.toHaveClass(/open/);
+  }
+});
+
+for (const [layout, width, height] of [['desktop', 1280, 800], ['mobile', 390, 844]]) {
+  test(`theme changes show a fading borderless gradient at the top right on ${layout}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await load(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const notice = page.locator('#themeNotice');
+    await page.locator('#themeToggleBtn').click();
+    await expect(notice).toHaveText('Dark mode enabled');
+    await expect(notice).toHaveClass(/visible/);
+    await expect.poll(() => notice.evaluate(element => Number(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
+    const dark = await notice.evaluate(element => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return { background: style.backgroundImage, border: style.borderTopWidth, transition: style.transitionProperty, top: rect.top, right: rect.right };
+    });
+    expect(dark.background).toContain('linear-gradient');
+    expect(dark.border).toBe('0px');
+    expect(dark.transition).toContain('opacity');
+    expect(dark.top).toBeGreaterThanOrEqual(0);
+    expect(dark.top).toBeLessThan(50);
+    expect(dark.right).toBeCloseTo(width, 0);
+    await page.locator('#themeToggleBtn').click();
+    await expect(notice).toHaveText('Light mode enabled');
+    expect(await notice.evaluate(element => getComputedStyle(element).backgroundImage)).not.toBe(dark.background);
+    await expect(notice).not.toHaveClass(/visible/, { timeout: 5000 });
+    await expect.poll(() => notice.evaluate(element => Number(getComputedStyle(element).opacity))).toBeLessThan(0.05);
+  });
 }
