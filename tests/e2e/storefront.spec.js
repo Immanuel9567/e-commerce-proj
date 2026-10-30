@@ -249,17 +249,23 @@ for (const width of [320, 390, 420, 421, 480, 680]) {
     const nav = page.locator('.site-nav');
     await expect(nav).toHaveCSS('position', 'fixed');
     const navBox = await nav.boundingBox();
-    expect(navBox.x).toBeGreaterThanOrEqual(0);
-    expect(navBox.x + navBox.width).toBeLessThanOrEqual(width);
+    expect(navBox.x).toBeGreaterThanOrEqual(10);
+    expect(width - navBox.x - navBox.width).toBeGreaterThanOrEqual(10);
     expect(navBox.y).toBeGreaterThan(700);
-    expect(navBox.y + navBox.height).toBeCloseTo(844, 0);
+    expect(844 - navBox.y - navBox.height).toBeGreaterThanOrEqual(10);
+    expect(844 - navBox.y - navBox.height).toBeLessThanOrEqual(32);
+    const radius = await nav.evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius));
+    expect(radius).toBeGreaterThanOrEqual(navBox.height / 2);
     for (const name of ['Home', 'Shop', 'Saved', 'Bag', 'Account', 'Admin']) {
       const button = nav.getByRole('button', { name: new RegExp(`^${name}\\b`) });
       await expect(button).toBeVisible();
       const box = await button.boundingBox();
       expect(box.height).toBeGreaterThanOrEqual(44);
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5);
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.x).toBeGreaterThanOrEqual(navBox.x);
+      expect(box.x + box.width).toBeLessThanOrEqual(navBox.x + navBox.width + 0.5);
+      const dimensions = await button.evaluate(element => ({ width: element.clientWidth, scroll: element.scrollWidth }));
+      expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
     }
     const cards = await page.locator('.product-card').evaluateAll(elements => elements.slice(0, 4).map(element => {
       const rect = element.getBoundingClientRect();
@@ -285,6 +291,23 @@ for (const width of [320, 390, 420, 421, 480, 680]) {
     expect(footer.y + footer.height).toBeLessThan(navBox.y);
   });
 }
+
+test('mobile navigation pill follows both themes and supports keyboard navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await load(page);
+  const nav = page.locator('.site-nav');
+  const home = nav.getByRole('button', { name: 'Home' });
+  await expect(home).toHaveAttribute('aria-current', 'page');
+  expect(await home.evaluate(element => getComputedStyle(element).boxShadow)).not.toBe('none');
+  const lightBackground = await nav.evaluate(element => getComputedStyle(element).backgroundColor);
+  await home.focus();
+  await page.keyboard.press('Tab');
+  await expect(nav.getByRole('button', { name: 'Shop' })).toBeFocused();
+  await page.locator('#themeToggleBtn').click();
+  await expect(page.locator('body')).toHaveClass(/dark-mode/);
+  await expect.poll(() => nav.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(lightBackground);
+  expect(await nav.evaluate(element => parseFloat(getComputedStyle(element).borderTopLeftRadius))).toBeGreaterThanOrEqual((await nav.boundingBox()).height / 2);
+});
 
 test('mobile bottom navigation opens all storefront panels', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
