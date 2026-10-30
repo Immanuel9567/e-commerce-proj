@@ -3,543 +3,285 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Concept Store</title>
-  <meta name="description" content="Experience pure tactile minimalism. High-contrast monochrome objects engineered with soft neumorphic precision.">
+  <title>V8's | Objects for everyday living</title>
+  <meta name="description" content="Thoughtfully designed objects for everyday living.">
   <meta name="theme-color" content="#e6ecf4">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23111215%22/><text y=%22.65em%22 x=%2250%%22 font-size=%2260%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22%23ffffff%22 font-family=%22sans-serif%22 dy=%22.1em%22>A</text></svg>">
-  
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
-  
-  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23111215%22/><text y=%22.72em%22 x=%2250%%22 font-size=%2260%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22%23ffffff%22 font-family=%22sans-serif%22>V</text></svg>">
+  <link rel="preload" href="assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
   <header class="site-header">
     <div class="container header-wrapper">
-      
-      <a href="#" class="brand-logo" id="brandLogo">
-        <div class="brand-badge">🤷‍♀️</div>
-        <span>V8's</span>
+      <a href="#home" class="brand-logo" id="brandLogo" aria-label="V8's home">
+        <span class="brand-badge" aria-hidden="true">V</span>
+        <span>V8's<span class="brand-dot">.</span></span>
       </a>
-
-      
       <div class="header-search">
         <div class="search-input-wrapper">
-          <span class="search-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </span>
-          <input type="text" 
-                 id="searchInput" 
-                 class="search-input" 
-                 placeholder="Search monochrome objects, audio, watches..." 
-                 autocomplete="off" />
-          <button class="search-clear-btn" id="searchClearBtn" aria-label="Clear search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <label for="searchInput" class="search-label">Search</label>
+          <input type="search" id="searchInput" class="search-input" placeholder="Search the collection" autocomplete="off">
+          <button type="button" class="search-clear-btn" id="searchClearBtn">Clear</button>
         </div>
       </div>
-
-      
-      <div class="header-actions">
-        
-        <button class="nm-icon-btn" id="themeToggleBtn" aria-label="Toggle Neumorphic Theme" title="Toggle Theme">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-        </button>
-      </div>
+      <button type="button" class="theme-button" id="themeToggleBtn" aria-pressed="false">
+        <span class="theme-symbol" aria-hidden="true">◐</span>
+        <span id="themeToggleLabel">Dark mode</span>
+      </button>
     </div>
+    <nav class="container site-nav" aria-label="Main navigation">
+      <button type="button" class="site-nav-link active" data-tab="home" aria-current="page">Home</button>
+      <button type="button" class="site-nav-link" data-tab="shop">Shop</button>
+      <button type="button" class="site-nav-link" data-tab="wishlist">Saved</button>
+      <button type="button" class="site-nav-link" data-tab="cart">Bag <span class="nav-count" id="navCartBadge">0</span></button>
+      <button type="button" class="site-nav-link" data-tab="profile">Account</button>
+      <button type="button" class="site-nav-link nav-admin" data-tab="admin">Admin</button>
+    </nav>
   </header>
 
-  <main>
+  <main id="home">
     <section class="hero-section">
       <div class="container">
         <div class="hero-card">
           <div class="hero-content">
-            <h1 class="hero-title">placeholder title</h1>
-            <p class="hero-desc">
-              Discover engineered artifacts sculpted from blah blah blah.
-            </p>
-
+            <div class="eyebrow"><span></span> THE EVERYDAY COLLECTION</div>
+            <h1 class="hero-title">Objects made for the way you live.</h1>
+            <p class="hero-desc">Thoughtful design, considered details, and a little more beauty in the everyday.</p>
             <div class="hero-cta-group">
-              <button class="nm-btn-black" onclick="document.getElementById('catalogSection').scrollIntoView({behavior: 'smooth'})">
-                Explore The Catalogue
-                <svg width="18" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
-
-              <div class="hero-price-chip">
-                <span class="hero-price-label">Product mvp</span>
-                <span class="hero-price-value">$299 USD</span>
+              <a class="nm-btn-black hero-cta" href="#catalogSection">Explore the collection <span aria-hidden="true">↗</span></a>
+              <div class="hero-price-chip" id="featuredPriceChip">
+                <span class="hero-price-label">Featured audio</span>
+                <span class="hero-price-value"><span id="featuredPrice">$299</span> <small>USD</small></span>
               </div>
             </div>
           </div>
-
-          
           <div class="hero-visual">
             <div class="hero-img-well">
-              <img src="assets/images/hero_headphones.jpg" 
-                   alt="AURA Studio Wireless ANC Over-Ear" 
-                   class="hero-product-img" 
-                   onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 rx=%2230%22 fill=%22%23e6ecf4%22/><path d=%22M60 110 A40 40 0 0 1 140 110 V140 A10 10 0 0 1 130 150 H120 A10 10 0 0 1 110 140 V120 A10 10 0 0 1 120 110 H135 A35 35 0 0 0 65 110 H80 A10 10 0 0 1 90 120 V140 A10 10 0 0 1 80 150 H70 A10 10 0 0 1 60 140 Z%22 fill=%22%23111215%22/></svg>';" />
-              <div class="hero-spec-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-                40mm Beryllium Drivers
-              </div>
+              <img src="assets/images/hero_headphones.jpg" alt="AURA wireless over-ear headphones" class="hero-product-img">
+              <div class="hero-spec-pill"><span class="spec-dot" aria-hidden="true"></span> 40mm drivers</div>
             </div>
+            <span class="hero-caption">01 / SOUND, SIMPLIFIED</span>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="controls-section" id="catalogSection">
+    <section class="controls-section" id="catalogSection" aria-label="Product collection">
       <div class="container">
+        <div class="collection-heading">
+          <div><div class="section-kicker">THE COLLECTION</div><h2>Considered essentials<span class="brand-dot">.</span></h2></div>
+          <p>Made to be used. Designed to be kept.</p>
+        </div>
         <div class="controls-wrapper">
-          
           <nav class="category-pills" aria-label="Product categories">
-            <button class="cat-pill active" data-category="all">All Objects</button>
-            <button class="cat-pill" data-category="audio">Audio</button>
-            <button class="cat-pill" data-category="timepieces">Timepieces</button>
-            <button class="cat-pill" data-category="footwear">Footwear</button>
-            <button class="cat-pill" data-category="living">Living & Decor</button>
-            <button class="cat-pill" data-category="tech">Workspace & Tech</button>
-            <button class="pill-tab" data-tab="admin" aria-label="Admin Panel">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-          <path d="M2 17l10 5 10-5"></path>
-          <path d="M2 12l10 5 10-5"></path>
-        </svg>
-      </span>
-      <span class="pill-tab-label">Admin</span>
-    </button>
-  </nav>
-
-          
+            <button type="button" class="cat-pill active" data-category="all" aria-pressed="true">All objects</button>
+            <button type="button" class="cat-pill" data-category="audio" aria-pressed="false">Audio</button>
+            <button type="button" class="cat-pill" data-category="timepieces" aria-pressed="false">Timepieces</button>
+            <button type="button" class="cat-pill" data-category="footwear" aria-pressed="false">Footwear</button>
+            <button type="button" class="cat-pill" data-category="living" aria-pressed="false">Living &amp; Decor</button>
+            <button type="button" class="cat-pill" data-category="tech" aria-pressed="false">Workspace &amp; Tech</button>
+          </nav>
           <div class="sort-wrapper">
-            <span class="sort-label">Sort:</span>
+            <span class="sort-label">Sort</span>
             <div class="sort-custom" id="sortCustom">
-              <button class="sort-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false">
-                <span id="sortLabel">Featured First</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <button type="button" class="sort-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="sortMenu">
+                <span id="sortLabel">Featured first</span><span class="sort-chevron" aria-hidden="true">⌄</span>
               </button>
-              <ul class="sort-menu" id="sortMenu" role="listbox">
-                <li class="sort-option active" role="option" data-value="featured">Featured First</li>
-                <li class="sort-option" role="option" data-value="price-low">Price: Low to High</li>
-                <li class="sort-option" role="option" data-value="price-high">Price: High to Low</li>
-                <li class="sort-option" role="option" data-value="rating">Top Rated</li>
+              <ul class="sort-menu" id="sortMenu" role="listbox" aria-label="Sort products" hidden>
+                <li role="presentation"><button type="button" class="sort-option active" role="option" aria-selected="true" data-value="featured">Featured first</button></li>
+                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-low">Price: low to high</button></li>
+                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-high">Price: high to low</button></li>
+                <li role="presentation"><button type="button" class="sort-option" role="option" aria-selected="false" data-value="rating">Top rated</button></li>
               </ul>
             </div>
           </div>
         </div>
-
-        <div class="results-meta" id="resultsCount">
-          Showing 12 items
-        </div>
-
-        <div class="product-grid" id="productGrid">
-          
-        </div>
+        <div class="results-meta" id="resultsCount" aria-live="polite"></div>
+        <div class="product-grid" id="productGrid"></div>
       </div>
     </section>
   </main>
 
-  <nav class="bottom-pill-nav" id="bottomPillNav" aria-label="Main Navigation">
-    
-    <button class="pill-tab active" data-tab="home" aria-label="Home">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-        </svg>
-      </span>
-      <span class="pill-tab-label">Home</span>
-    </button>
-
-    
-    <button class="pill-tab" data-tab="shop" aria-label="Catalogue">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-      </span>
-      <span class="pill-tab-label">Explore</span>
-    </button>
-
-    
-    <button class="pill-tab" data-tab="wishlist" aria-label="Wishlist">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-      </span>
-      <span class="pill-tab-label">Saved</span>
-    </button>
-
-    
-    <button class="pill-tab" data-tab="cart" aria-label="Shopping Bag">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <path d="M16 10a4 4 0 0 1-8 0"></path>
-        </svg>
-        <span class="pill-badge" id="navCartBadge">1</span>
-      </span>
-      <span class="pill-tab-label">Bag</span>
-    </button>
-
-    
-    <button class="pill-tab" data-tab="profile" aria-label="Account & Orders">
-      <span class="pill-tab-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-      </span>
-      <span class="pill-tab-label">Account</span>
-    </button>
-  </nav>
-
   <div class="overlay" id="overlay"></div>
 
-  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping Bag Drawer">
+  <aside class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true" tabindex="-1">
     <div class="drawer-header">
-      <h2 class="drawer-title">
-        <span>Shopping Bag</span>
-        <span class="drawer-count" id="drawerCount">1 Item</span>
-      </h2>
-      <button class="nm-icon-btn" id="cartCloseBtn" aria-label="Close Shopping Bag">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
+      <div><div class="section-kicker">YOUR SELECTION</div><h2 class="drawer-title" id="drawerTitle">Shopping bag <span class="drawer-count" id="drawerCount">0 items</span></h2></div>
+      <button type="button" class="text-close" id="cartCloseBtn"><span aria-hidden="true">×</span> Close</button>
     </div>
-
-    
-    <div class="cart-items-list" id="cartItemsList">
-      
-    </div>
-
-    
+    <div class="cart-items-list" id="cartItemsList"></div>
     <div class="drawer-footer">
-      
       <div class="promo-box">
-        <input type="text" id="promoInput" class="promo-input" placeholder="Enter promo code" />
-        <button class="promo-btn" id="promoApplyBtn">Apply</button>
+        <label for="promoInput" class="visually-hidden">Promotion code</label>
+        <input type="text" id="promoInput" class="promo-input" placeholder="Promotion code" autocomplete="off">
+        <button type="button" class="promo-btn" id="promoApplyBtn">Apply</button>
       </div>
-
-      <div class="summary-row">
-        <span>Subtotal</span>
-        <span id="cartSubtotal">$0.00</span>
-      </div>
-
-      <div class="summary-row" id="cartDiscountRow" style="display: none; color: var(--success); font-weight: 700;">
-        <span>Promo Discount</span>
-        <span id="cartDiscount">-$0.00</span>
-      </div>
-
-      <div class="summary-row">
-        <span>Complimentary Shipping</span>
-        <span id="cartShipping">Free</span>
-      </div>
-
-      <div class="summary-row total">
-        <span>Total Due</span>
-        <span id="cartTotal">$0.00</span>
-      </div>
-
-      <button class="checkout-btn" id="checkoutTriggerBtn">
-        Proceed to Checkout
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
-      </button>
+      <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">$0.00</span></div>
+      <div class="summary-row discount-row" id="cartDiscountRow" hidden><span class="discount-label">Discount <button type="button" id="promoRemoveBtn" class="promo-remove-btn" hidden>Remove</button></span><span id="cartDiscount">−$0.00</span></div>
+      <div class="summary-row"><span>Shipping</span><span id="cartShipping">Free</span></div>
+      <div class="summary-row total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+      <button type="button" class="checkout-btn" id="checkoutTriggerBtn">Continue to checkout <span aria-hidden="true">→</span></button>
     </div>
   </aside>
 
-  <div class="modal" id="quickViewModal" role="dialog" aria-modal="true" aria-label="Product Details">
-    <button class="nm-icon-btn modal-close-btn" id="quickViewCloseBtn" aria-label="Close modal">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <div id="quickViewContent">
-      
-    </div>
+  <div class="modal" id="quickViewModal" role="dialog" aria-modal="true" aria-label="Product details" aria-hidden="true" tabindex="-1">
+    <button type="button" class="text-close modal-close-btn" id="quickViewCloseBtn"><span aria-hidden="true">×</span> Close</button>
+    <div id="quickViewContent"></div>
   </div>
 
-  <div class="modal" id="wishlistModal" role="dialog" aria-modal="true" aria-label="Saved Objects">
-    <button class="nm-icon-btn modal-close-btn" id="wishlistCloseBtn" aria-label="Close wishlist">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; margin-bottom: 24px;">
-      Saved Wishlist
-    </h2>
-    <div id="wishlistItemsList" style="display: flex; flex-direction: column; gap: 16px;">
-      
-    </div>
+  <div class="modal list-modal" id="wishlistModal" role="dialog" aria-modal="true" aria-labelledby="wishlistTitle" aria-hidden="true" tabindex="-1">
+    <button type="button" class="text-close modal-close-btn" id="wishlistCloseBtn"><span aria-hidden="true">×</span> Close</button>
+    <div class="section-kicker">A LITTLE SOMETHING FOR LATER</div>
+    <h2 class="modal-heading" id="wishlistTitle">Saved objects<span class="brand-dot">.</span></h2>
+    <div id="wishlistItemsList" class="saved-list"></div>
   </div>
 
-  <div class="modal checkout-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-label="Checkout">
-    <button class="nm-icon-btn modal-close-btn" id="checkoutCloseBtn" aria-label="Close checkout">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-
-    
-    <form id="checkoutForm" class="checkout-steps">
-      <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;">Express Dispatch</h2>
-
-      <div class="input-groove">
-        <label for="checkoutName">Full Legal Name</label>
-        <input type="text" id="checkoutName" required placeholder="Alexander Vance" />
+  <div class="modal checkout-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" aria-hidden="true" tabindex="-1">
+    <button type="button" class="text-close modal-close-btn" id="checkoutCloseBtn"><span aria-hidden="true">×</span> Close</button>
+    <form id="checkoutForm" class="checkout-steps" autocomplete="off">
+      <div><div class="section-kicker">ALMOST THERE</div><h2 class="modal-heading" id="checkoutTitle">Checkout<span class="brand-dot">.</span></h2></div>
+      <div class="input-groove"><label for="checkoutName">Full name</label><input type="text" id="checkoutName" name="name" required maxlength="120"></div>
+      <div class="input-groove"><label for="checkoutAddress">Delivery address</label><input type="text" id="checkoutAddress" name="address" required maxlength="200"></div>
+      <div class="checkout-fields-row">
+        <div class="input-groove"><label for="checkoutCity">City / postal code</label><input type="text" id="checkoutCity" name="city" required maxlength="120"></div>
+        <div class="input-groove"><label for="checkoutEmail">Contact email</label><input type="email" id="checkoutEmail" name="email" required maxlength="160"></div>
       </div>
-
-      <div class="input-groove">
-        <label for="checkoutAddress">Delivery Address</label>
-        <input type="text" id="checkoutAddress" required placeholder="742 Evergreen Terrace, Suite 4B" />
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div class="input-groove">
-          <label for="checkoutCity">City / Postal</label>
-          <input type="text" id="checkoutCity" required placeholder="Berlin 10115" />
+      <fieldset class="payment-fieldset">
+        <legend>Payment method</legend>
+        <div class="payment-options" role="radiogroup" aria-label="Payment method">
+          <button type="button" class="pay-card-pill active" role="radio" aria-checked="true" tabindex="0" data-payment="Apple Pay"><span class="payment-mark" aria-hidden="true">◉</span><span>Apple Pay</span></button>
+          <button type="button" class="pay-card-pill" role="radio" aria-checked="false" tabindex="-1" data-payment="Credit Card"><span class="payment-mark" aria-hidden="true">▭</span><span>Credit card</span></button>
+          <button type="button" class="pay-card-pill" role="radio" aria-checked="false" tabindex="-1" data-payment="Crypto / BTC"><span class="payment-mark" aria-hidden="true">B</span><span>Crypto / BTC</span></button>
         </div>
-        <div class="input-groove">
-          <label for="checkoutEmail">Contact Email</label>
-          <input type="email" id="checkoutEmail" required placeholder="name@domain.com" />
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-          Select Payment Method
-        </div>
-        <div class="payment-options">
-          <div class="pay-card-pill active">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-            <span>Apple Pay</span>
-          </div>
-
-          <div class="pay-card-pill">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-              <line x1="2" y1="10" x2="22" y2="10"></line>
-            </svg>
-            <span>Credit Card</span>
-          </div>
-
-          <div class="pay-card-pill">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-            <span>Crypto / BTC</span>
-          </div>
-        </div>
-      </div>
-
-      <button type="submit" class="checkout-btn" id="confirmPayBtn" style="margin-top: 10px;">
-        Authorize & Confirm Order
-      </button>
+      </fieldset>
+      <p class="checkout-disclosure">Local preview only. No payment will be collected.</p>
+      <button type="submit" class="checkout-btn" id="confirmPayBtn">Place order <span aria-hidden="true">→</span></button>
     </form>
-
-    
-    <div id="orderSuccessScreen" class="order-success-screen" style="display: none;">
-      <div class="success-check-badge">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      </div>
-      <h2 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin-bottom: 8px;">
-        Order Confirmed
-      </h2>
-      <p style="color: var(--gray-muted); margin-bottom: 18px;">
-        Thank you for choosing AURA. Your bespoke monochrome packaging is being assembled.
-      </p>
-      
-      <div style="background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); border-radius: var(--radius-md); padding: 14px; margin-bottom: 24px;">
-        <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--gray-muted);">Order Reference Code</span>
-        <div id="orderTrackingNum" style="font-family: monospace; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.08em; margin-top: 4px;">
-          AURA-839201
-        </div>
-      </div>
-
-      <button class="nm-btn-black" id="continueShoppingBtn" style="width: 100%;">
-        Return to Home
-      </button>
+    <div id="orderSuccessScreen" class="order-success-screen" hidden>
+      <div class="success-check-badge" aria-hidden="true">✓</div>
+      <div class="section-kicker">THANK YOU</div>
+      <h2 class="modal-heading" id="orderSuccessTitle">Order saved<span class="brand-dot">.</span></h2>
+      <p>Your order is saved on this device. No payment was collected.</p>
+      <div class="order-reference"><span>Order reference</span><strong id="orderTrackingNum"></strong></div>
+      <button type="button" class="checkout-btn" id="continueShoppingBtn">Return to Home</button>
     </div>
   </div>
 
-  <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-label="Member Account">
-    <button class="nm-icon-btn modal-close-btn" id="profileCloseBtn" aria-label="Close Profile">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <div style="text-align: center; margin-bottom: 28px;">
-      <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--black-primary); color: var(--white-pure); font-size: 1.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: var(--nm-dark-flat);">
-        AV
-      </div>
-      <h3 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800;">Alexander Vance</h3>
-      <span style="font-size: 0.8rem; color: var(--gray-muted); font-weight: 600;">AURA Black Tier Member • ID: #9821</span>
-    </div>
+  <div class="modal list-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle" aria-hidden="true" tabindex="-1">
+    <button type="button" class="text-close modal-close-btn" id="profileCloseBtn"><span aria-hidden="true">×</span> Close</button>
+    <div class="section-kicker">YOUR ACCOUNT</div>
+    <h2 class="modal-heading" id="profileTitle">Your orders<span class="brand-dot">.</span></h2>
+    <p class="modal-intro">Orders saved on this device.</p>
+    <div id="profileOrders" class="profile-orders"></div>
+  </div>
 
-    <div style="display: flex; flex-direction: column; gap: 14px;">
-      <div style="padding: 16px; border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <div style="font-weight: 800; font-size: 0.95rem;">Order #AURA-2026-0047</div>
-          <div style="font-size: 0.75rem; color: var(--gray-muted);">Dispatched • Arriving Tomorrow</div>
-        </div>
-        <span class="card-tag" style="background: var(--bg-card); box-shadow: var(--nm-shadow-subtle);">In Transit</span>
-      </div>
-
-      <div style="padding: 16px; border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <div style="font-weight: 800; font-size: 0.95rem;">Order #AURA-2026-0031</div>
-          <div style="font-size: 0.75rem; color: var(--gray-muted);">Delivered Oct 14 • 2 Items</div>
-        </div>
-        <span class="card-tag" style="background: var(--bg-card); box-shadow: var(--nm-shadow-subtle);">Completed</span>
+  <div class="modal admin-modal" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminTitle" aria-hidden="true" tabindex="-1">
+    <button type="button" class="text-close modal-close-btn admin-close" id="adminCloseBtn"><span aria-hidden="true">×</span> Close</button>
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="section-kicker">V8'S / STORE</div>
+        <h2 id="adminTitle">Admin<span class="brand-dot">.</span></h2>
+        <nav class="admin-navigation" aria-label="Admin sections">
+          <button type="button" class="admin-tab active" data-admin="analytics" aria-current="page">Overview</button>
+          <button type="button" class="admin-tab" data-admin="products">Products</button>
+          <button type="button" class="admin-tab" data-admin="orders">Orders</button>
+          <button type="button" class="admin-tab" data-admin="inventory">Inventory</button>
+          <button type="button" class="admin-tab" data-admin="customers">Customers</button>
+          <button type="button" class="admin-tab" data-admin="discounts">Promotions</button>
+        </nav>
+        <div class="admin-local-note"><span aria-hidden="true"></span> Local preview</div>
+      </aside>
+      <div class="admin-content">
+        <section class="admin-panel active" id="admin-analytics">
+          <div class="admin-panel-header"><div><div class="section-kicker">STORE PERFORMANCE</div><h3>Overview</h3><p>Your store, at a glance.</p></div></div>
+          <div class="analytics-grid">
+            <div class="analytics-card"><div class="analytics-label">Revenue</div><div class="analytics-val" id="analyticsRevenue">$0.00</div><div class="analytics-detail">Excludes cancelled &amp; refunded</div></div>
+            <div class="analytics-card"><div class="analytics-label">Orders</div><div class="analytics-val" id="analyticsOrders">0</div><div class="analytics-detail">Active orders</div></div>
+            <div class="analytics-card"><div class="analytics-label">Average order</div><div class="analytics-val" id="analyticsAvg">$0.00</div><div class="analytics-detail">Per active order</div></div>
+            <div class="analytics-card"><div class="analytics-label">Low stock</div><div class="analytics-val" id="analyticsLowStock">0</div><div class="analytics-detail">Fewer than 5 remaining</div></div>
+          </div>
+          <div class="analytics-panels">
+            <div class="analytics-panel"><div class="analytics-panel-heading"><h4>Revenue</h4><span>Last 7 days</span></div><div class="revenue-chart" id="analyticsRevenueChart"></div></div>
+            <div class="analytics-panel"><div class="analytics-panel-heading"><h4>Top products</h4><span>By units sold</span></div><div id="analyticsTopProducts"></div></div>
+          </div>
+        </section>
+        <section class="admin-panel" id="admin-products" hidden>
+          <div class="admin-panel-header"><div><div class="section-kicker">YOUR CATALOGUE</div><h3>Products</h3><p>Manage the objects in your collection.</p></div><button type="button" class="nm-btn-black admin-add-btn" id="addProductBtn"><span aria-hidden="true">+</span> Add product</button></div>
+          <div class="admin-editor" id="adminProductEditor" hidden>
+            <div class="editor-heading"><h4 id="productEditorTitle">Add product</h4><button type="button" class="text-action" id="cancelProductEdit">Cancel</button></div>
+            <form id="adminProductForm" class="admin-form">
+              <input type="hidden" id="productId">
+              <div class="admin-form-grid">
+                <label>Product name<input id="productName" type="text" required maxlength="120"></label>
+                <label>Category<select id="productCategory" required><option value="audio">Audio</option><option value="timepieces">Timepieces</option><option value="footwear">Footwear</option><option value="living">Living &amp; Decor</option><option value="tech">Workspace &amp; Tech</option></select></label>
+                <label>Price (USD)<input id="productPrice" type="number" min="0" step="0.01" required></label>
+                <label>Stock quantity<input id="productStock" type="number" min="0" step="1" required></label>
+                <label class="admin-form-wide">Tags <span class="field-caption">Comma separated</span><input id="productTags" type="text" maxlength="160"></label>
+                <label class="admin-form-wide">Description<textarea id="productDescription" rows="3" required maxlength="1200"></textarea></label>
+                <label class="admin-form-wide">Image URL or path<input id="productImage" type="text" maxlength="2048"></label>
+                <label class="admin-form-wide">Upload image<input id="productImageFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+                <label class="admin-image-remove admin-form-wide" id="productRemoveImageLabel" hidden><input id="productRemoveImage" type="checkbox"> Remove current image</label>
+              </div>
+              <button type="submit" class="nm-btn-black">Save product</button>
+            </form>
+          </div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="adminProductBody"></tbody></table></div>
+        </section>
+        <section class="admin-panel" id="admin-orders" hidden>
+          <div class="admin-panel-header"><div><div class="section-kicker">FULFILMENT</div><h3>Orders</h3><p>Review and update customer orders.</p></div></div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Reference</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminOrderBody"></tbody></table></div>
+          <div id="orderDetails" class="customer-history" hidden></div>
+          <p class="admin-disclosure">Refunds are recorded locally; no payment is returned.</p>
+        </section>
+        <section class="admin-panel" id="admin-inventory" hidden>
+          <div class="admin-panel-header"><div><div class="section-kicker">STOCK CONTROL</div><h3>Inventory</h3><p>Keep an eye on what is available.</p></div></div>
+          <div class="inventory-summary" id="inventorySummary"></div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Stock quantity</th><th>Status</th><th>Update</th></tr></thead><tbody id="adminInventoryBody"></tbody></table></div>
+        </section>
+        <section class="admin-panel" id="admin-customers" hidden>
+          <div class="admin-panel-header"><div><div class="section-kicker">PEOPLE</div><h3>Customers</h3><p>Profiles and order history from this device.</p></div></div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Customer</th><th>Orders</th><th>Spent</th><th>Account status</th><th>History</th></tr></thead><tbody id="adminCustomerBody"></tbody></table></div>
+          <div id="customerHistory" class="customer-history" hidden></div>
+        </section>
+        <section class="admin-panel" id="admin-discounts" hidden>
+          <div class="admin-panel-header"><div><div class="section-kicker">OFFERS</div><h3>Promotions</h3><p>Create codes, vouchers and scheduled sales.</p></div><button type="button" class="nm-btn-black admin-add-btn" id="addPromoBtn"><span aria-hidden="true">+</span> Add promotion</button></div>
+          <div class="admin-editor" id="adminPromoEditor" hidden>
+            <div class="editor-heading"><h4>New promotion</h4><button type="button" class="text-action" id="cancelPromoEdit">Cancel</button></div>
+            <form id="adminPromoForm" class="admin-form">
+              <div class="admin-form-grid">
+                <label>Code or sale name<input id="promoCode" type="text" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]+"></label>
+                <label>Discount type<select id="promoType"><option value="percent">Percentage</option><option value="amount">Fixed amount (USD)</option></select></label>
+                <label><span id="promoValueLabel">Discount (%)</span><input id="promoPercent" type="number" min="1" max="100" step="1" required></label>
+                <label>Starts <span class="field-caption">Optional</span><input id="promoStart" type="date"></label>
+                <label>Ends <span class="field-caption">Optional</span><input id="promoEnd" type="date"></label>
+                <label class="admin-inline-check admin-form-wide"><input id="promoAutomatic" type="checkbox"> Apply automatically</label>
+              </div>
+              <button type="submit" class="nm-btn-black">Save promotion</button>
+            </form>
+          </div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Code</th><th>Discount</th><th>Schedule</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminPromoBody"></tbody></table></div>
+        </section>
       </div>
     </div>
   </div>
 
+  <div class="confirm-layer" id="confirmLayer" hidden>
+    <div class="confirm-backdrop"></div>
+    <div class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <h2 id="confirmTitle"></h2><p id="confirmMessage"></p>
+      <div class="confirm-actions"><button type="button" class="nm-btn" id="confirmCancel">Cancel</button><button type="button" class="nm-btn-black" id="confirmAccept">Confirm</button></div>
+    </div>
+  </div>
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <footer class="site-footer">
     <div class="container footer-content">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-weight: 800; color: var(--black-primary); font-family: var(--font-display);">AURA</span>
-        <span>© 2026 Architectural Monochrome Objects. All rights reserved.</span>
-      </div>
-      <div class="footer-badges">
-        <span class="footer-pill">Free Global Carbon-Neutral Delivery</span>
-        <span class="footer-pill">30-Day Minimal Return</span>
-        <span class="footer-pill">2-Year Craftsmanship Warranty</span>
-      </div>
+      <div><strong>V8's<span class="brand-dot">.</span></strong><span>Thoughtful objects for everyday living.</span></div>
+      <span>© 2026 V8's. All rights reserved.</span>
     </div>
   </footer>
-
-  
-
-  <div class="modal admin-modal" id="adminModal" role="dialog" aria-modal="true" aria-label="Admin Panel">
-    <button class="nm-icon-btn modal-close-btn" id="adminCloseBtn" aria-label="Close Admin Panel">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    </button>
-    <div class="admin-layout">
-      <nav class="admin-sidebar">
-        <h2 class="admin-title">Admin Panel</h2>
-        <button class="admin-tab active" data-admin="products">Products</button>
-        <button class="admin-tab" data-admin="orders">Orders</button>
-        <button class="admin-tab" data-admin="inventory">Inventory</button>
-        <button class="admin-tab" data-admin="customers">Customers</button>
-        <button class="admin-tab" data-admin="analytics">Analytics</button>
-        <button class="admin-tab" data-admin="discounts">Discounts</button>
-      </nav>
-      <div class="admin-content">
-        <div class="admin-panel active" id="admin-products">
-          <div class="admin-panel-header">
-            <h3>Product Management</h3>
-            <button class="nm-btn-black admin-add-btn" id="addProductBtn">+ Add Product</button>
-          </div>
-          <div class="admin-table-wrap">
-            <table class="admin-table" id="adminProductTable">
-              <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-              <tbody id="adminProductBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="admin-panel" id="admin-orders">
-          <div class="admin-panel-header"><h3>Order Management</h3></div>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Update</th></tr></thead>
-              <tbody id="adminOrderBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="admin-panel" id="admin-inventory">
-          <div class="admin-panel-header"><h3>Inventory Control</h3></div>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th></tr></thead>
-              <tbody id="adminInventoryBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="admin-panel" id="admin-customers">
-          <div class="admin-panel-header"><h3>Customer Management</h3></div>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead><tr><th>Name</th><th>Email</th><th>Orders</th><th>Tier</th><th>Joined</th></tr></thead>
-              <tbody id="adminCustomerBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="admin-panel" id="admin-analytics">
-          <div class="admin-panel-header"><h3>Sales &amp; Analytics</h3></div>
-          <div class="analytics-grid">
-            <div class="analytics-card"><div class="analytics-val" id="analyticsRevenue">$0.00</div><div class="analytics-label">Total Revenue</div></div>
-            <div class="analytics-card"><div class="analytics-val" id="analyticsOrders">0</div><div class="analytics-label">Total Orders</div></div>
-            <div class="analytics-card"><div class="analytics-val" id="analyticsAvg">$0.00</div><div class="analytics-label">Avg. Order Value</div></div>
-            <div class="analytics-card"><div class="analytics-val" id="analyticsProducts">0</div><div class="analytics-label">Active Products</div></div>
-          </div>
-          <h4 style="margin: 24px 0 12px; font-weight: 800;">Top Selling Products</h4>
-          <div id="analyticsTopProducts"></div>
-        </div>
-        <div class="admin-panel" id="admin-discounts">
-          <div class="admin-panel-header">
-            <h3>Discounts &amp; Promotions</h3>
-            <button class="nm-btn-black admin-add-btn" id="addPromoBtn">+ Add Code</button>
-          </div>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead><tr><th>Code</th><th>Discount</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody id="adminPromoBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
   <script src="js/products.js"></script>
+  <script src="js/store.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
