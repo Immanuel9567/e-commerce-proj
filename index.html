@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concept Store</title>
+  <meta name="description" content="Experience pure tactile minimalism. High-contrast monochrome objects engineered with soft neumorphic precision.">
+  <meta name="theme-color" content="#e6ecf4">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23111215%22/><text y=%22.65em%22 x=%2250%%22 font-size=%2260%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22%23ffffff%22 font-family=%22sans-serif%22 dy=%22.1em%22>A</text></svg>">
+  
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+  
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container header-wrapper">
+      
+      <a href="#" class="brand-logo" id="brandLogo">
+        <div class="brand-badge">🤷‍♀️</div>
+        <span>V8's</span>
+      </a>
+
+      
+      <div class="header-search">
+        <div class="search-input-wrapper">
+          <span class="search-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input type="text" 
+                 id="searchInput" 
+                 class="search-input" 
+                 placeholder="Search monochrome objects, audio, watches..." 
+                 autocomplete="off" />
+          <button class="search-clear-btn" id="searchClearBtn" aria-label="Clear search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      
+      <div class="header-actions">
+        
+        <button class="nm-icon-btn" id="themeToggleBtn" aria-label="Toggle Neumorphic Theme" title="Toggle Theme">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-section">
+      <div class="container">
+        <div class="hero-card">
+          <div class="hero-content">
+            <h1 class="hero-title">placeholder title</h1>
+            <p class="hero-desc">
+              Discover engineered artifacts sculpted from blah blah blah.
+            </p>
+
+            <div class="hero-cta-group">
+              <button class="nm-btn-black" onclick="document.getElementById('catalogSection').scrollIntoView({behavior: 'smooth'})">
+                Explore The Catalogue
+                <svg width="18" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+
+              <div class="hero-price-chip">
+                <span class="hero-price-label">Product mvp</span>
+                <span class="hero-price-value">$299 USD</span>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="hero-visual">
+            <div class="hero-img-well">
+              <img src="assets/images/hero_headphones.jpg" 
+                   alt="AURA Studio Wireless ANC Over-Ear" 
+                   class="hero-product-img" 
+                   onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 rx=%2230%22 fill=%22%23e6ecf4%22/><path d=%22M60 110 A40 40 0 0 1 140 110 V140 A10 10 0 0 1 130 150 H120 A10 10 0 0 1 110 140 V120 A10 10 0 0 1 120 110 H135 A35 35 0 0 0 65 110 H80 A10 10 0 0 1 90 120 V140 A10 10 0 0 1 80 150 H70 A10 10 0 0 1 60 140 Z%22 fill=%22%23111215%22/></svg>';" />
+              <div class="hero-spec-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                40mm Beryllium Drivers
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls-section" id="catalogSection">
+      <div class="container">
+        <div class="controls-wrapper">
+          
+          <nav class="category-pills" aria-label="Product categories">
+            <button class="cat-pill active" data-category="all">All Objects</button>
+            <button class="cat-pill" data-category="audio">Audio</button>
+            <button class="cat-pill" data-category="timepieces">Timepieces</button>
+            <button class="cat-pill" data-category="footwear">Footwear</button>
+            <button class="cat-pill" data-category="living">Living & Decor</button>
+            <button class="cat-pill" data-category="tech">Workspace & Tech</button>
+            <button class="pill-tab" data-tab="admin" aria-label="Admin Panel">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+      </span>
+      <span class="pill-tab-label">Admin</span>
+    </button>
+  </nav>
+
+          
+          <div class="sort-wrapper">
+            <span class="sort-label">Sort:</span>
+            <div class="sort-custom" id="sortCustom">
+              <button class="sort-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false">
+                <span id="sortLabel">Featured First</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <ul class="sort-menu" id="sortMenu" role="listbox">
+                <li class="sort-option active" role="option" data-value="featured">Featured First</li>
+                <li class="sort-option" role="option" data-value="price-low">Price: Low to High</li>
+                <li class="sort-option" role="option" data-value="price-high">Price: High to Low</li>
+                <li class="sort-option" role="option" data-value="rating">Top Rated</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-meta" id="resultsCount">
+          Showing 12 items
+        </div>
+
+        <div class="product-grid" id="productGrid">
+          
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-pill-nav" id="bottomPillNav" aria-label="Main Navigation">
+    
+    <button class="pill-tab active" data-tab="home" aria-label="Home">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="pill-tab-label">Home</span>
+    </button>
+
+    
+    <button class="pill-tab" data-tab="shop" aria-label="Catalogue">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </span>
+      <span class="pill-tab-label">Explore</span>
+    </button>
+
+    
+    <button class="pill-tab" data-tab="wishlist" aria-label="Wishlist">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="pill-tab-label">Saved</span>
+    </button>
+
+    
+    <button class="pill-tab" data-tab="cart" aria-label="Shopping Bag">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="pill-badge" id="navCartBadge">1</span>
+      </span>
+      <span class="pill-tab-label">Bag</span>
+    </button>
+
+    
+    <button class="pill-tab" data-tab="profile" aria-label="Account & Orders">
+      <span class="pill-tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="pill-tab-label">Account</span>
+    </button>
+  </nav>
+
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping Bag Drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">
+        <span>Shopping Bag</span>
+        <span class="drawer-count" id="drawerCount">1 Item</span>
+      </h2>
+      <button class="nm-icon-btn" id="cartCloseBtn" aria-label="Close Shopping Bag">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    
+    <div class="cart-items-list" id="cartItemsList">
+      
+    </div>
+
+    
+    <div class="drawer-footer">
+      
+      <div class="promo-box">
+        <input type="text" id="promoInput" class="promo-input" placeholder="Enter promo code" />
+        <button class="promo-btn" id="promoApplyBtn">Apply</button>
+      </div>
+
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0.00</span>
+      </div>
+
+      <div class="summary-row" id="cartDiscountRow" style="display: none; color: var(--success); font-weight: 700;">
+        <span>Promo Discount</span>
+        <span id="cartDiscount">-$0.00</span>
+      </div>
+
+      <div class="summary-row">
+        <span>Complimentary Shipping</span>
+        <span id="cartShipping">Free</span>
+      </div>
+
+      <div class="summary-row total">
+        <span>Total Due</span>
+        <span id="cartTotal">$0.00</span>
+      </div>
+
+      <button class="checkout-btn" id="checkoutTriggerBtn">
+        Proceed to Checkout
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="modal" id="quickViewModal" role="dialog" aria-modal="true" aria-label="Product Details">
+    <button class="nm-icon-btn modal-close-btn" id="quickViewCloseBtn" aria-label="Close modal">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <div id="quickViewContent">
+      
+    </div>
+  </div>
+
+  <div class="modal" id="wishlistModal" role="dialog" aria-modal="true" aria-label="Saved Objects">
+    <button class="nm-icon-btn modal-close-btn" id="wishlistCloseBtn" aria-label="Close wishlist">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; margin-bottom: 24px;">
+      Saved Wishlist
+    </h2>
+    <div id="wishlistItemsList" style="display: flex; flex-direction: column; gap: 16px;">
+      
+    </div>
+  </div>
+
+  <div class="modal checkout-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-label="Checkout">
+    <button class="nm-icon-btn modal-close-btn" id="checkoutCloseBtn" aria-label="Close checkout">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    
+    <form id="checkoutForm" class="checkout-steps">
+      <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;">Express Dispatch</h2>
+
+      <div class="input-groove">
+        <label for="checkoutName">Full Legal Name</label>
+        <input type="text" id="checkoutName" required placeholder="Alexander Vance" />
+      </div>
+
+      <div class="input-groove">
+        <label for="checkoutAddress">Delivery Address</label>
+        <input type="text" id="checkoutAddress" required placeholder="742 Evergreen Terrace, Suite 4B" />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="input-groove">
+          <label for="checkoutCity">City / Postal</label>
+          <input type="text" id="checkoutCity" required placeholder="Berlin 10115" />
+        </div>
+        <div class="input-groove">
+          <label for="checkoutEmail">Contact Email</label>
+          <input type="email" id="checkoutEmail" required placeholder="name@domain.com" />
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+          Select Payment Method
+        </div>
+        <div class="payment-options">
+          <div class="pay-card-pill active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span>Apple Pay</span>
+          </div>
+
+          <div class="pay-card-pill">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <span>Credit Card</span>
+          </div>
+
+          <div class="pay-card-pill">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Crypto / BTC</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="checkout-btn" id="confirmPayBtn" style="margin-top: 10px;">
+        Authorize & Confirm Order
+      </button>
+    </form>
+
+    
+    <div id="orderSuccessScreen" class="order-success-screen" style="display: none;">
+      <div class="success-check-badge">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin-bottom: 8px;">
+        Order Confirmed
+      </h2>
+      <p style="color: var(--gray-muted); margin-bottom: 18px;">
+        Thank you for choosing AURA. Your bespoke monochrome packaging is being assembled.
+      </p>
+      
+      <div style="background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); border-radius: var(--radius-md); padding: 14px; margin-bottom: 24px;">
+        <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--gray-muted);">Order Reference Code</span>
+        <div id="orderTrackingNum" style="font-family: monospace; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.08em; margin-top: 4px;">
+          AURA-839201
+        </div>
+      </div>
+
+      <button class="nm-btn-black" id="continueShoppingBtn" style="width: 100%;">
+        Return to Home
+      </button>
+    </div>
+  </div>
+
+  <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-label="Member Account">
+    <button class="nm-icon-btn modal-close-btn" id="profileCloseBtn" aria-label="Close Profile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <div style="text-align: center; margin-bottom: 28px;">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--black-primary); color: var(--white-pure); font-size: 1.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: var(--nm-dark-flat);">
+        AV
+      </div>
+      <h3 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800;">Alexander Vance</h3>
+      <span style="font-size: 0.8rem; color: var(--gray-muted); font-weight: 600;">AURA Black Tier Member • ID: #9821</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="padding: 16px; border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-weight: 800; font-size: 0.95rem;">Order #AURA-2026-0047</div>
+          <div style="font-size: 0.75rem; color: var(--gray-muted);">Dispatched • Arriving Tomorrow</div>
+        </div>
+        <span class="card-tag" style="background: var(--bg-card); box-shadow: var(--nm-shadow-subtle);">In Transit</span>
+      </div>
+
+      <div style="padding: 16px; border-radius: var(--radius-md); background: var(--bg-primary); box-shadow: var(--nm-shadow-pressed); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-weight: 800; font-size: 0.95rem;">Order #AURA-2026-0031</div>
+          <div style="font-size: 0.75rem; color: var(--gray-muted);">Delivered Oct 14 • 2 Items</div>
+        </div>
+        <span class="card-tag" style="background: var(--bg-card); box-shadow: var(--nm-shadow-subtle);">Completed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-weight: 800; color: var(--black-primary); font-family: var(--font-display);">AURA</span>
+        <span>© 2026 Architectural Monochrome Objects. All rights reserved.</span>
+      </div>
+      <div class="footer-badges">
+        <span class="footer-pill">Free Global Carbon-Neutral Delivery</span>
+        <span class="footer-pill">30-Day Minimal Return</span>
+        <span class="footer-pill">2-Year Craftsmanship Warranty</span>
+      </div>
+    </div>
+  </footer>
+
+  
+
+  <div class="modal admin-modal" id="adminModal" role="dialog" aria-modal="true" aria-label="Admin Panel">
+    <button class="nm-icon-btn modal-close-btn" id="adminCloseBtn" aria-label="Close Admin Panel">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <div class="admin-layout">
+      <nav class="admin-sidebar">
+        <h2 class="admin-title">Admin Panel</h2>
+        <button class="admin-tab active" data-admin="products">Products</button>
+        <button class="admin-tab" data-admin="orders">Orders</button>
+        <button class="admin-tab" data-admin="inventory">Inventory</button>
+        <button class="admin-tab" data-admin="customers">Customers</button>
+        <button class="admin-tab" data-admin="analytics">Analytics</button>
+        <button class="admin-tab" data-admin="discounts">Discounts</button>
+      </nav>
+      <div class="admin-content">
+        <div class="admin-panel active" id="admin-products">
+          <div class="admin-panel-header">
+            <h3>Product Management</h3>
+            <button class="nm-btn-black admin-add-btn" id="addProductBtn">+ Add Product</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminProductTable">
+              <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+              <tbody id="adminProductBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-panel" id="admin-orders">
+          <div class="admin-panel-header"><h3>Order Management</h3></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Update</th></tr></thead>
+              <tbody id="adminOrderBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-panel" id="admin-inventory">
+          <div class="admin-panel-header"><h3>Inventory Control</h3></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th></tr></thead>
+              <tbody id="adminInventoryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-panel" id="admin-customers">
+          <div class="admin-panel-header"><h3>Customer Management</h3></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Orders</th><th>Tier</th><th>Joined</th></tr></thead>
+              <tbody id="adminCustomerBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-panel" id="admin-analytics">
+          <div class="admin-panel-header"><h3>Sales &amp; Analytics</h3></div>
+          <div class="analytics-grid">
+            <div class="analytics-card"><div class="analytics-val" id="analyticsRevenue">$0.00</div><div class="analytics-label">Total Revenue</div></div>
+            <div class="analytics-card"><div class="analytics-val" id="analyticsOrders">0</div><div class="analytics-label">Total Orders</div></div>
+            <div class="analytics-card"><div class="analytics-val" id="analyticsAvg">$0.00</div><div class="analytics-label">Avg. Order Value</div></div>
+            <div class="analytics-card"><div class="analytics-val" id="analyticsProducts">0</div><div class="analytics-label">Active Products</div></div>
+          </div>
+          <h4 style="margin: 24px 0 12px; font-weight: 800;">Top Selling Products</h4>
+          <div id="analyticsTopProducts"></div>
+        </div>
+        <div class="admin-panel" id="admin-discounts">
+          <div class="admin-panel-header">
+            <h3>Discounts &amp; Promotions</h3>
+            <button class="nm-btn-black admin-add-btn" id="addPromoBtn">+ Add Code</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Code</th><th>Discount</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="adminPromoBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
