@@ -4,6 +4,18 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Fixed — stale image fallback test
+
+- Rewrote the fallback test that the local-image change invalidated. It previously relied on `aura-05` pointing at Unsplash and being offline; it now fails the image request explicitly with `page.route('**/assets/images/prod_frenchpress.jpg', route => route.abort('failed'))` and still asserts the SVG category fallback renders and decodes.
+- Added a second fallback test for the storefront grid: a broken product image degrades to the category art while the card, heading and price stay visible.
+- Net effect: the suite guards the real fallback path again instead of passing or failing for reasons unrelated to the app.
+
+### Verification — image fallback
+
+- With the app's `error` handler disabled, both fallback tests **failed** as expected (detail page and storefront card). Restored, both passed.
+- Full suite in real Chromium: **38 passed, 0 failed (43.1 s)** — the whole `npm run test:e2e` set, including the 14 built-in product pages, the checkout/status journey, inventory, promotions, six mobile widths, themes, tap-highlight and keyboard tests. `npm test` also passed **18/18**.
+- Command used, in this sandbox only: `LD_LIBRARY_PATH=/tmp/al2023/lib PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/chromium npm run test:e2e`.
+
 ### Documentation — Playwright made runnable in the sandbox
 
 - Documented how to run `npm run test:e2e` when Playwright's browser download is blocked: use the Chromium build and shared libraries shipped inside the `@sparticuz/chromium` npm package and point `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `LD_LIBRARY_PATH` at them. Verified with Chromium 153 on Debian 12. `@sparticuz/chromium` is **not** a project dependency; it was decompressed outside the repository.
@@ -12,7 +24,7 @@ This file records meaningful repository changes and the checks that support them
 ### Verification — first full browser run
 
 - **`npm run test:e2e` executed for the first time in this session: 36 passed, 1 failed (37 total, 49.3 s).** This supersedes the standing "Playwright not run" note in the entries above for the behavior those tests cover.
-- The single failure is the pre-existing fallback test, not new work: `tests/e2e/product-page.spec.js:249` broke `aura-05`'s image URL and expected the SVG category fallback on the detail page. It now receives `assets/images/prod_frenchpress.jpg`, because `aura-05` no longer points at a remote URL, so breaking its image is no longer possible by simply being offline. The test needs to force an actual load failure; it is left failing and unfixed so it is not silently weakened.
+- The single failure was the pre-existing fallback test, not new work: `tests/e2e/product-page.spec.js:249` relied on `aura-05` pointing at a remote URL, so breaking its image was no longer possible by being offline. It was fixed in the following step (see "Fixed — stale image fallback test") by forcing a real load failure rather than weakening the assertion. The suite is now green.
 - All 14 built-in product detail pages, the checkout/status journey (including the new `pending → processing → shipped` steps), inventory, promotions, mobile navigation, theme, tap-highlight and keyboard tests passed in real Chromium.
 
 ### Changed — all product images are local

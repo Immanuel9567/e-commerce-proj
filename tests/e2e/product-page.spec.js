@@ -247,10 +247,25 @@ test('product details reflect changes from another tab without losing variant fo
 });
 
 test('failed product images use the existing category fallback on detail pages', async ({ page }) => {
+  // Break the image for real. Built-in products now use local files that always
+  // load, so the request must be failed explicitly to exercise the fallback.
+  await page.route('**/assets/images/prod_frenchpress.jpg', route => route.abort('failed'));
   await load(page, '/?product=aura-05');
   const image = page.locator('#productPage .product-detail-img');
   await expect(image).toHaveAttribute('src', /^data:image\/svg\+xml,/);
+  // The fallback is the living-room shape for this product's category.
+  const source = await image.getAttribute('src');
+  expect(decodeURIComponent(source)).toContain('viewBox="0 0 200 200"');
   expect(await image.evaluate(el => el.complete && el.naturalWidth > 0)).toBe(true);
+});
+
+test('a broken image on the storefront falls back without hiding the product', async ({ page }) => {
+  await page.route('**/assets/images/prod_flask.jpg', route => route.abort('failed'));
+  await load(page);
+  const card = page.locator('.product-card').filter({ hasText: 'Minimalist Matte Thermal Flask' });
+  await expect(card).toBeVisible();
+  await expect(card.locator('img')).toHaveAttribute('src', /^data:image\/svg\+xml,/);
+  await expect(card.getByRole('heading', { level: 2 })).toHaveText(/Thermal Flask/);
 });
 
 test('featured hero metadata stays legible without overlapping on a narrow screen', async ({ page }) => {
