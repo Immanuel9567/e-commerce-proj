@@ -10,6 +10,8 @@ This file records meaningful repository changes and the checks that support them
 - Verified what is actually live at https://e-commerce-proj-umber.vercel.app/ rather than trusting the deploy status: the rendered storefront lists 14 products whose images all resolve to `assets/images/…` (the eight new files included) with **no** `images.unsplash.com` references remaining, and the deployed `js/store.js` contains both the `ORDER_STATUS_FLOW` rules and the cent-level `promotionDiscount` (`subtotalCents * percent + 50`).
 - Vercel reported the `main` deployment as **success** (commit `8ae06a5`). This makes the previously merged product-detail and mobile-navigation work live as well.
 - **Not independently confirmed:** direct byte-level fetch of the eight new JPEGs. Sandbox `curl` to Vercel is blocked and the page-fetch proxy returns HTTP 500 for binary content. The files are part of the same deployed commit that the live page and scripts come from, so a missing asset would have to be a Vercel static-serving fault; this was not tested from a normal browser network.
+- Post-merge re-run on `main`: `npm test` **18/18** and `npm run test:e2e` **38/38** (43.4 s). A first `npm test` attempt reported 1 failure; the cause was `node_modules/jsdom` missing from the sandbox after the checkout, not the merged code. `npm install` restored it and the suite passed. Treat a `MODULE_NOT_FOUND` failure in `tests/ui.test.js` as a missing-install symptom, not a code defect.
+- Note for future sandboxes: `/tmp` is cleared between sessions, so the Chromium and `al2023` library artifacts described in the README must be regenerated with `npm install --prefix /tmp/chromepkg @sparticuz/chromium` before running the browser suite.
 
 ### Fixed — stale image fallback test
 
