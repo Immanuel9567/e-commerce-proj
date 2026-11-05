@@ -21,6 +21,7 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-11-05 | Working rules added: a roadmap progress log after every step, and a per-step check-in questionnaire that must mark a recommended option | `agent.md`, `AGENTS.md`, `ROADMAP.md` | Done — docs only |
 | 2026-11-05 | All 14 built-in product images are now local generated assets; the 8 Unsplash hotlinks are gone and a test enforces local files | `js/products.js`, `assets/images/`, `tests/store.test.js` | Done — not deployed |
 | 2026-11-05 | Playwright suite made runnable in the sandbox via an npm-shipped Chromium 153 and its libraries; fallback tests rewritten to force a real load failure | `README.md`, `tests/e2e/product-page.spec.js` | Done — full suite green, **38/38** |
+| 2026-11-05 | PR #5 merged to `main` (`8ae06a5`); production deploy verified to serve local images and both fixes | — | Done — live at e-commerce-proj-umber.vercel.app |
 
 Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
 

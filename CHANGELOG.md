@@ -4,6 +4,13 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Deployment — PR #5 merged and production verified
+
+- **PR [#5](https://github.com/Immanuel9567/e-commerce-proj/pull/5) merged into `main`** as `8ae06a5` on 2026-11-05, covering 6 commits and 22 files (+848/−21). Mergeability was `MERGEABLE`/`CLEAN`; the Vercel preview check passed before merging. No CI workflows exist in the repository, so the green suites were local runs.
+- Verified what is actually live at https://e-commerce-proj-umber.vercel.app/ rather than trusting the deploy status: the rendered storefront lists 14 products whose images all resolve to `assets/images/…` (the eight new files included) with **no** `images.unsplash.com` references remaining, and the deployed `js/store.js` contains both the `ORDER_STATUS_FLOW` rules and the cent-level `promotionDiscount` (`subtotalCents * percent + 50`).
+- Vercel reported the `main` deployment as **success** (commit `8ae06a5`). This makes the previously merged product-detail and mobile-navigation work live as well.
+- **Not independently confirmed:** direct byte-level fetch of the eight new JPEGs. Sandbox `curl` to Vercel is blocked and the page-fetch proxy returns HTTP 500 for binary content. The files are part of the same deployed commit that the live page and scripts come from, so a missing asset would have to be a Vercel static-serving fault; this was not tested from a normal browser network.
+
 ### Fixed — stale image fallback test
 
 - Rewrote the fallback test that the local-image change invalidated. It previously relied on `aura-05` pointing at Unsplash and being offline; it now fails the image request explicitly with `page.route('**/assets/images/prod_frenchpress.jpg', route => route.abort('failed'))` and still asserts the SVG category fallback renders and decodes.
