@@ -4,6 +4,19 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — continuous integration (prepared, not active)
+
+- Prepared a CI workflow at [`ci/tests.yml`](ci/tests.yml): on every pull request and push to `main` it runs `npm ci`, `npm test`, `npx playwright install --with-deps chromium`, then `npm run test:e2e`, uploading `playwright-report/` and `test-results/` only when a step fails. GitHub-hosted `ubuntu-latest`, Node 22, npm caching, 15-minute timeout, read-only `contents` permission, actions pinned at `v7`.
+- **It is not active and does not run.** GitHub requires the file at `.github/workflows/tests.yml`, but pushing that path was rejected: the GitHub App connection for this repository lacks the `workflows` permission (`refusing to allow a GitHub App to create or update workflow … without workflows permission`). The file was therefore committed as `ci/tests.yml` so the branch stays pushable, and [`ci/README.md`](ci/README.md) documents both ways to activate it (create the file through the GitHub web editor, or push with a token that has the `workflow` scope).
+- No CI enforcement exists as a result. Green suites in PRs are still local runs until the file is moved into place.
+
+### Verification — continuous integration
+
+- Parsed the workflow with a YAML parser: valid, one `test` job, seven steps in the intended order, triggers `pull_request` and `push` to `main`.
+- Confirmed `npm ci` succeeds from `package.json`/`package-lock.json` alone in a clean directory, then simulated the CI steps there with the working tree copied in: `npm test` passed **18/18** and `npm run test:e2e` passed **38/38** (43.5 s) against a clean install.
+- Confirmed `actions/checkout`, `actions/setup-node` and `actions/upload-artifact` exist at `v7` and still declare the `node-version`, `cache`, `name`, `path` and `retention-days` inputs used. The earlier `v4` pins were updated after checking, since `v7` is current.
+- **Not verified:** any GitHub Actions run, because the workflow cannot be placed where GitHub looks for it with the current connection.
+
 ### Deployment — PR #5 merged and production verified
 
 - **PR [#5](https://github.com/Immanuel9567/e-commerce-proj/pull/5) merged into `main`** as `8ae06a5` on 2026-11-05, covering 6 commits and 22 files (+848/−21). Mergeability was `MERGEABLE`/`CLEAN`; the Vercel preview check passed before merging. No CI workflows exist in the repository, so the green suites were local runs.
