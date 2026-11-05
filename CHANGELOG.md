@@ -4,6 +4,21 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Changed — all product images are local
+
+- Replaced the 8 product images that hotlinked `images.unsplash.com` with locally generated assets in `assets/images/`: `prod_frenchpress.jpg`, `prod_keyboard.jpg`, `prod_desklamp.jpg`, `prod_fieldwatch.jpg`, `prod_runner.jpg`, `prod_charger.jpg`, `prod_iem.jpg` and `prod_flask.jpg`. All 14 built-in products now load from this repository, so the storefront no longer depends on a third-party image host or its availability, and the README's local-images claim is now accurate.
+- New images follow the existing house style (square, single object, light studio background, no branding or text) and are smaller than the originals: 57–168 KB versus 443–568 KB for the pre-existing local files.
+- `js/products.js` now exports `PRODUCTS`, `CATEGORIES` and `STORE_DATA` for Node, guarding the `window` assignment, so tests can inspect the catalogue.
+- Added a regression test: every built-in product image must match `assets/images/…` **and** exist on disk. Re-introducing a remote URL fails the suite.
+
+### Verification — local product images
+
+- The new test failed as expected when an Unsplash URL was temporarily restored to `aura-14`, then passed after reverting. `npm test` passed **18/18** (14 business-logic, 4 DOM).
+- Served the app on port 8000: all 14 files under `assets/images/` returned HTTP **200**, and the served `js/products.js` contains **0** `https://` references.
+- DOM check of the rendered grid: 14 images, **14 local**, **0 remote**, 14 distinct files, hero image local, no script errors.
+- Reviewed all 8 generated images visually before wiring them in: background, lighting, shadow and framing match the existing catalogue; no text or logos appear.
+- **Not run:** Playwright. The images feed `tests/e2e/images.spec.js` and the product-page image/fallback tests, which must be run where Chromium is installed. No test asserts specific image URLs, but the fallback test behavior was not re-verified here.
+
 ### Documentation — questionnaire recommendations
 
 - The mandatory per-step questionnaire in [agent.md](agent.md) and [AGENTS.md](AGENTS.md) must now mark a **Recommended** option on every question, with the reasoning in the option description and the message. Exactly one recommendation per question, based on repository state, risk, cost and the roadmap; the instruction to say so plainly when there is no basis is included so guidance is not invented.

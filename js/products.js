@@ -106,7 +106,7 @@ const PRODUCTS = [
     rating: 4.8,
     reviewsCount: 142,
     badge: 'Trending',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_frenchpress.jpg',
     description: 'Double-walled matte ceramic body that preserves brewing temperature for 2 hours. Fine mesh dual stainless steel plunger produces velvety micro-filtered coffee.',
     specs: [
       { label: 'Capacity', value: '800ml' },
@@ -130,7 +130,7 @@ const PRODUCTS = [
     rating: 5.0,
     reviewsCount: 312,
     badge: 'Top Rated',
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_keyboard.jpg',
     description: 'Gasket-mounted solid aluminum block chassis with lubed silent linear switches and dual-tone PBT dye-sub keycaps. Tri-mode wireless connectivity.',
     specs: [
       { label: 'Layout', value: '75% Compact' },
@@ -154,7 +154,7 @@ const PRODUCTS = [
     rating: 4.8,
     reviewsCount: 63,
     badge: 'Design Award',
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_desklamp.jpg',
     description: 'Ultra-slim curved monolithic LED light bar with smooth touch capacitive dimming slider. Ra95 natural sunlight spectrum reproduction.',
     specs: [
       { label: 'Light Engine', value: 'Ra95 CRI LED' },
@@ -178,7 +178,7 @@ const PRODUCTS = [
     rating: 4.9,
     reviewsCount: 88,
     badge: 'Limited',
-    image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_fieldwatch.jpg',
     description: 'Grade 5 lightweight titanium case with self-winding Japanese automatic mechanical movement. 100m water resistance with Super-LumiNova luminescence.',
     specs: [
       { label: 'Case', value: 'Grade 5 Solid Titanium' },
@@ -202,7 +202,7 @@ const PRODUCTS = [
     rating: 4.6,
     reviewsCount: 154,
     badge: 'Eco',
-    image: 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_runner.jpg',
     description: 'Zero-seam recycled engineered knit upper with bio-based high rebound nitrogen-infused foam midsole. Weightless cushion for all-day velocity.',
     specs: [
       { label: 'Upper', value: 'Recycled Poly Knit' },
@@ -226,7 +226,7 @@ const PRODUCTS = [
     rating: 4.7,
     reviewsCount: 119,
     badge: 'Popular',
-    image: 'https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_charger.jpg',
     description: 'Precision CNC weighted base with soft-touch micro-suction silicone. Simultaneous 15W high-speed wireless charging for smartphone and wireless earphones.',
     specs: [
       { label: 'Output', value: 'Dual 15W Fast Wireless' },
@@ -298,7 +298,7 @@ const PRODUCTS = [
     rating: 4.8,
     reviewsCount: 97,
     badge: 'Hi-Res',
-    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_iem.jpg',
     description: 'Dual balanced armature plus 10mm graphene dynamic driver hybrid design. Detachable 8-core silver-plated copper MMCX braided audio cable.',
     specs: [
       { label: 'Drivers', value: '1 DD + 2 BA Hybrid' },
@@ -322,7 +322,7 @@ const PRODUCTS = [
     rating: 4.9,
     reviewsCount: 340,
     badge: 'Essential',
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=700&q=80',
+    image: 'assets/images/prod_flask.jpg',
     description: 'Triple-wall vacuum insulated 18/8 medical grade stainless steel. Keeps beverages cold for 24 hours or steaming hot for 12 hours without condensation.',
     specs: [
       { label: 'Insulation', value: 'Triple-Wall Vacuum' },
@@ -346,7 +346,10 @@ const CATEGORIES = [
   { id: 'tech', label: 'Workspace & Tech', icon: 'briefcase' }
 ];
 
-window.STORE_DATA = {
+const STORE_DATA = {
   products: PRODUCTS,
   categories: CATEGORIES
 };
+if (typeof window !== 'undefined') window.STORE_DATA = STORE_DATA;
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { PRODUCTS, CATEGORIES, STORE_DATA };

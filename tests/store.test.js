@@ -245,3 +245,15 @@ test('the refund rule keeps analytics and customers consistent for shipped order
   assert.equal(store.products[0].stock, 1);
   assert.throws(() => store.updateOrderStatus(order.reference, 'delivered'), /cannot be updated/);
 });
+
+test('every built-in product image is a local file that exists', () => {
+  const path = require('node:path');
+  const fs = require('node:fs');
+  const { PRODUCTS } = require('../js/products.js');
+  const root = path.join(__dirname, '..');
+  assert.equal(PRODUCTS.length, 14);
+  for (const product of PRODUCTS) {
+    assert.match(product.image, /^assets\/images\/[\w.-]+\.(jpg|png|webp)$/, `${product.id} must use a local asset, got ${product.image}`);
+    assert.ok(fs.existsSync(path.join(root, product.image)), `${product.id} image is missing: ${product.image}`);
+  }
+});

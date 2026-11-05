@@ -8,6 +8,8 @@ npm start
 
 Open `http://localhost:8000` and use **Admin** in the main navigation. Products, bag contents, saved items, promotions, customers, order references, inventory and order statuses are stored in this browser's local storage. Existing `aura_cart` and `aura_wishlist` data are imported on first use.
 
+All product images are served from `assets/images/` in this repository, so the storefront does not depend on a third-party image host. `tests/store.test.js` fails if a built-in product points at a remote URL or a missing file.
+
 Product images and titles open a full details page at a reloadable URL such as `/?product=aura-01`. The built-in products can be opened from those links in another browser, but locally added or edited products do not sync: a link to a locally added product may show “Product not found” elsewhere, and edits to built-in products remain local.
 
 ## Hosted demo
