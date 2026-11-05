@@ -36,6 +36,25 @@ Some entries in the source catalogue are truncated, interleaved or unrelated to 
 - Do not apply remote database migrations, change production settings, migrate customer data or enable real payment/refund actions without explicit owner approval. Use non-production environments and backups where appropriate.
 - Keep third-party assets and dependencies licensed and minimal. Do not silently remove the existing local fonts or redesign the site to satisfy a generic style preference.
 
+## Roadmap progress log: mandatory after every step
+
+The roadmap is planning-only, but its **Progress log** must record what was actually finished so the next collaborator can see the real state without reconstructing the conversation. See [ROADMAP.md](ROADMAP.md).
+
+1. At the end of **every** completed step — a bug fix, a UI change, a test addition, a document, a deployment — add or update a row in the roadmap's progress log before ending the turn. Include the date, a one-line description of the user-visible or operational change, the main files, and the status (done, blocked, not deployed, unverified).
+2. Keep the log separate from the phase checklists. Finishing logged work **never** ticks a phase box, marks a phase complete, or authorises the next phase. Phases still change status only on the acceptance criteria plus owner review.
+3. If a step is left partially done or unverified, say so in the row rather than omitting it. Do not record a check as passed unless it was run.
+4. Keep rows in date order and preserve past rows; correct a wrong row by editing it or adding a follow-up entry, not by deleting history. Keep detail in [CHANGELOG.md](CHANGELOG.md) and link it rather than duplicating paragraphs.
+
+## Check in after every step: mandatory questionnaire
+
+Do not end a completed step by guessing what comes next, and do not chain into further work on your own initiative.
+
+1. Finish the current step, verify it, and update [CHANGELOG.md](CHANGELOG.md) and the roadmap progress log.
+2. Then ask the owner a short questionnaire with `ask_user` covering, at minimum: **what to do next** (with concrete options drawn from the remaining known work), **how much scope** to take on, and any **decision the next step depends on** (for example approval to start a roadmap phase, deploy, or change a guardrail).
+3. In the accompanying message, state what was just completed, what was verified, what was not run, and which risks or open decisions remain — so the choice is informed.
+4. Do not start the next step in the same turn as the questionnaire. Wait for the answer. If the questionnaire is skipped or unanswered, stop and wait rather than choosing for the owner.
+5. Options must be real, permitted work: never offer to skip an approval gate, run a destructive operation, or apply remote migrations without the owner's explicit approval.
+
 ## Changelog: mandatory on every substantive change
 
 Update [CHANGELOG.md](CHANGELOG.md) **in the same change** as code, configuration, deployment or documentation work so another collaborator can understand what happened without reconstructing the conversation.

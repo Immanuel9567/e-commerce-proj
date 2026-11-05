@@ -4,6 +4,16 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Documentation — workflow rules and roadmap progress log
+
+- Added a **Progress log** table to [ROADMAP.md](ROADMAP.md) that records completed work separately from the phase checklists, back-filled with the storefront, product-page and mobile-UI work already on `main` plus the 2026-11-05 discount and order-status step. Finishing logged work still does **not** tick a phase box; all phases 0–6 remain **not started**.
+- Added two mandatory working rules to [agent.md](agent.md) and surfaced them in [AGENTS.md](AGENTS.md): update the roadmap progress log after every completed step, and end every step by asking the owner a questionnaire about what to do next instead of continuing on your own initiative. The rules require stating what was verified, what was not run, and which decisions remain, and forbid offering to skip an approval gate or run destructive/remote operations.
+- Documentation-only change: no application behavior, data or deployment changed.
+
+### Verification — workflow rules
+
+- Documentation relative links checked across `README.md`, `CHANGELOG.md`, `ROADMAP.md`, `agent.md`, `AGENTS.md` and `MINDMAP.md`: **0 broken** after URL-decoding `%20`. `git diff --check` passed. `npm test` still passes **17/17**, unchanged by this step.
+
 ### Fixed — percentage discount rounding
 
 - Percentage promotions now round the discount **at the cent level, half up**, instead of rounding the dollar figure before dividing (`js/store.js`, `promotionDiscount`). The old formula mis-rounded exact half-cent ties and resolved every one of them downward: 15% of `$4.10` gave `$0.61` (mathematically `0.615`) and 5% of `$20.10` gave `$1.01` (mathematically `1.005`), while 20% of `$4.10` correctly gave `$0.82`. The same subtotal therefore rounded in opposite directions depending on the percentage.
