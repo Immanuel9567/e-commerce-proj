@@ -23,7 +23,8 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-11-05 | Playwright suite made runnable in the sandbox via an npm-shipped Chromium 153 and its libraries; fallback tests rewritten to force a real load failure | `README.md`, `tests/e2e/product-page.spec.js` | Done — full suite green, **38/38** |
 | 2026-11-05 | PR #5 merged to `main` (`8ae06a5`); production deploy verified to serve local images and both fixes | — | Done — live at e-commerce-proj-umber.vercel.app |
 | 2026-11-05 | CI workflow prepared to run `npm test` and `npm run test:e2e` on PRs and pushes to `main` | `ci/tests.yml`, `ci/README.md` | **Blocked** — repo connection cannot write `.github/workflows/`; needs owner to move the file into place |
-| 2026-11-05 | Products can be archived and restored instead of deleted; permanent deletion is archived-only and refused for products with past orders; admin status filter and a retired-product page added | `js/store.js`, `js/app.js`, `index.html`, `css/style.css`, `tests/` | Done — not deployed |
+| 2026-11-05 | Products can be archived and restored instead of deleted; permanent deletion is archived-only and refused for products with past orders; admin status filter and a retired-product page added | `js/store.js`, `js/app.js`, `index.html`, `css/style.css`, `tests/` | Done — merged in PR #6 (`b01ac14`); production not re-verified |
+| 2026-11-05 | Repeatable mutation checks added (`npm run test:mutation`); all 10 rules verified as genuinely covered | `tests/mutation-check.js`, `package.json` | Done — 10/10 mutations caught |
 
 Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
 

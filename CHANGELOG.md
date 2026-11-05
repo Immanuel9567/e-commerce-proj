@@ -4,6 +4,19 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — repeatable mutation checks
+
+- Added `npm run test:mutation` (`tests/mutation-check.js`): it breaks one rule at a time in `js/store.js`, runs `npm test`, and reports whether the suite notices. Each mutation restores the original file in a `finally` block, and the script refuses to run if the baseline suite is already failing. A mutation that leaves every test green is reported as **SURVIVED**, because that behaviour is not truly covered.
+- Ten mutations are covered: dollar-level discount rounding, uncapped fixed discounts, missing status flow, cancellation without restock, early refunds, archived products leaking into the storefront, deleting products with past orders, archived products left in the bag, archived products counted in low stock, and unbounded bag quantities.
+- **Result: 10/10 caught**, naming the specific failing test for each. The tree was verified unmodified afterwards and `npm test` still passed 25/25.
+- This exists because a new test in the archiving step passed for the wrong reason (`/archive/i` matched two different error messages, so removing the sales guard left the suite green). The audit confirms the current suites are not hollow in that way.
+
+### Deployment — PR #6 merged
+
+- **PR [#6](https://github.com/Immanuel9567/e-commerce-proj/pull/6) merged into `main`** as `b01ac14`, covering product archiving, the prepared CI workflow and the prior verification records. Mergeability was `MERGEABLE`/`CLEAN` with Vercel checks passing; archiving was confirmed present on `main` after the merge.
+- While merging, the local branch was found reset to `8ae06a5` with all four commits present only as uncommitted working-tree edits. The work was preserved: the local changes were stashed, the branch was reset to `origin/arena/23020d9a-e-commerce-proj` (the source of truth, which still held `ffdf55b`), and the branch was fast-forwarded to `b01ac14`. The stash was retained rather than dropped. A side effect was `node_modules/jsdom` disappearing again, `npm install` restoring it, and `npm test` returning to 25/25.
+- **Not re-verified:** the production deploy of this merge. Unlike PR #5, the live site was not re-checked after merging, so archiving is not confirmed live.
+
 ### Added — product archiving replaces plain deletion
 
 - Products can now be **archived** instead of deleted. Archiving stamps `archivedAt`, sets a derived `archived` flag, removes the product from the storefront grid, search, category counts, the featured hero, the inventory panel and the low-stock count, and removes it from bags and saved items. It stays in Admin under a new **Archived** filter and can be **restored** at any time with its stock, price and images intact.

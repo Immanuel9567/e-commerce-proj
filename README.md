@@ -47,6 +47,8 @@ LD_LIBRARY_PATH=/path/to/al2023/lib PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to
 
 This was verified with Chromium 153 in a Debian 12 sandbox; it does not replace a normal Playwright browser install for day-to-day use.
 
+`npm run test:mutation` checks the tests themselves: it breaks one business rule at a time and reports whether the suite notices. A rule whose mutation leaves every test green is reported as **SURVIVED**, meaning it is not genuinely covered. Run it after adding or changing a guarded rule.
+
 A CI workflow is prepared in [`ci/tests.yml`](ci/tests.yml) but is **not active yet**: the repository connection cannot write to `.github/workflows/`. See [`ci/README.md`](ci/README.md) to switch it on. Until then, run both suites locally before opening a pull request.
 
 `npm test` runs two suites and needs no browser:
