@@ -29,7 +29,7 @@ test('migrates old bag and wishlist and reconciles quantities with stock', () =>
   assert.deepEqual([...makeStore(storage).wishlist], ['one', 'two']);
 });
 
-test('product changes persist, and deleting a product removes it from bags and saved items', () => {
+test('product changes persist, and retiring a product removes it from bags and saved items', () => {
   const storage = new MemoryStorage();
   const store = makeStore(storage);
   const product = store.saveProduct({ title: 'Desk lamp', category: 'living', price: '42.50', stock: '2', description: 'A lamp', tags: ['New', 'Desk'], image: '' });
@@ -39,9 +39,15 @@ test('product changes persist, and deleting a product removes it from bags and s
   const reloaded = makeStore(storage);
   assert.equal(reloaded.products.find(item => item.id === product.id).title, 'Desk light');
   assert.equal(reloaded.getCartTotals().subtotal, 45);
-  reloaded.deleteProduct(product.id);
+  // Archiving clears the bag and saved items; permanent deletion takes two steps.
+  assert.throws(() => reloaded.deleteProduct(product.id), /Archive this product before deleting/);
+  reloaded.archiveProduct(product.id);
   assert.equal(reloaded.cart.length, 0);
   assert.equal(reloaded.wishlist.size, 0);
+  assert.equal(makeStore(storage).availableProducts.some(item => item.id === product.id), false);
+  // It stays in the catalogue so it can be restored, until it is deleted explicitly.
+  assert.equal(makeStore(storage).products.some(item => item.id === product.id), true);
+  reloaded.deleteProduct(product.id);
   assert.equal(makeStore(storage).products.some(item => item.id === product.id), false);
 });
 
@@ -94,7 +100,9 @@ test('checkout persists the same reference, order snapshots and inventory atomic
   assert.equal(reloaded.getAnalytics().revenue, 170);
   assert.equal(reloaded.getAnalytics().topProducts[0].quantity, 2);
   assert.equal(reloaded.getCustomers()[0].orders[0].reference, order.reference);
-  reloaded.deleteProduct('one');
+  // 'one' has been sold, so it is retired by archiving rather than deleted.
+  reloaded.archiveProduct('one');
+  assert.deepEqual(reloaded.availableProducts.map(product => product.id), ['two']);
   assert.equal(reloaded.orders[0].items[0].title, 'Object One');
 });
 
@@ -256,4 +264,70 @@ test('every built-in product image is a local file that exists', () => {
     assert.match(product.image, /^assets\/images\/[\w.-]+\.(jpg|png|webp)$/, `${product.id} must use a local asset, got ${product.image}`);
     assert.ok(fs.existsSync(path.join(root, product.image)), `${product.id} image is missing: ${product.image}`);
   }
+});
+
+test('archiving hides a product from the storefront while keeping it in admin', () => {
+  const store = makeStore();
+  store.archiveProduct('two');
+  assert.equal(store.products.length, 2, 'admin still sees both');
+  assert.deepEqual(store.availableProducts.map(product => product.id), ['one']);
+  assert.equal(store.products.find(product => product.id === 'two').archived, true);
+  assert.ok(store.products.find(product => product.id === 'two').archivedAt);
+  store.restoreProduct('two');
+  assert.deepEqual(store.availableProducts.map(product => product.id).sort(), ['one', 'two']);
+  assert.equal(store.products.find(product => product.id === 'two').archived, false);
+});
+
+test('archiving clears the bag and saved items and frees the stock check', () => {
+  const store = makeStore();
+  store.addToCart('two', 2);
+  store.toggleWishlist('two');
+  store.archiveProduct('two');
+  assert.equal(store.cart.length, 0);
+  assert.equal(store.wishlist.size, 0);
+  assert.throws(() => store.addToCart('two'), /no longer available/);
+  // Restoring does not quietly return items to the bag.
+  store.restoreProduct('two');
+  assert.equal(store.cart.length, 0);
+  assert.equal(store.wishlist.size, 0);
+});
+
+test('a product that has sales cannot be permanently deleted', () => {
+  const storage = new MemoryStorage();
+  const store = makeStore(storage);
+  store.addToCart('one');
+  const order = store.placeOrder(details);
+  // Pins the sales rule specifically, not merely "archive first".
+  assert.throws(() => store.deleteProduct('one'), /appears in past orders/);
+  assert.equal(store.products.some(product => product.id === 'one'), true);
+  // The order and its snapshot are untouched by the refusal.
+  assert.equal(store.orders[0].items[0].title, 'Object One');
+  assert.equal(store.getAnalytics().topProducts[0].id, 'one');
+
+  // Archiving the same product is allowed and leaves analytics intact.
+  store.archiveProduct('one');
+  assert.equal(store.products.find(product => product.id === 'one').archived, true);
+  assert.throws(() => store.deleteProduct('one'), /appears in past orders/);
+  assert.equal(store.getAnalytics().revenue, 115);
+  assert.equal(store.getAnalytics().topProducts[0].id, 'one');
+  assert.equal(store.orders[0].reference, order.reference);
+});
+
+test('a product with no sales can still be archived and then permanently deleted', () => {
+  const store = makeStore();
+  const draft = store.saveProduct({ title: 'Draft object', category: 'living', price: '10', stock: '1', description: 'Not sold yet' });
+  // An unsold product is only blocked by the two-step rule.
+  assert.throws(() => store.deleteProduct(draft.id), /Archive this product before deleting/);
+  store.archiveProduct(draft.id);
+  store.deleteProduct(draft.id);
+  assert.equal(store.products.some(product => product.id === draft.id), false);
+});
+
+test('archived products are excluded from low stock but active ones are counted', () => {
+  const store = makeStore();
+  store.updateStock('one', 2); // below 5
+  store.updateStock('two', 1); // below 5
+  assert.equal(store.getAnalytics().lowStock, 2);
+  store.archiveProduct('one');
+  assert.equal(store.getAnalytics().lowStock, 1, 'archived stock no longer needs reordering');
 });

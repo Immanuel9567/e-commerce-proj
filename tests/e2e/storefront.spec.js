@@ -190,9 +190,16 @@ test('admin products, low stock and scheduled promotions work in the storefront'
   await page.locator('#cartCloseBtn').click();
   await page.locator('[data-tab="admin"]').click();
   await page.locator('[data-admin="products"]').click();
-  await page.locator('#adminProductBody tr').filter({ hasText: 'Desk lamp <special>' }).getByRole('button', { name: 'Delete' }).click();
+  const lampRow = page.locator('#adminProductBody tr').filter({ hasText: 'Desk lamp <special>' });
+  await lampRow.getByRole('button', { name: 'Archive' }).click();
   await page.locator('#confirmAccept').click();
   await expect(page.locator('#adminProductBody')).not.toContainText('Desk lamp <special>');
+  // Permanent deletion is a separate, archived-only step.
+  await page.locator('[data-product-filter="archived"]').click();
+  await page.locator('#adminProductBody tr').filter({ hasText: 'Desk lamp <special>' }).getByRole('button', { name: 'Delete permanently' }).click();
+  await page.locator('#confirmAccept').click();
+  await expect(page.locator('#adminProductBody')).not.toContainText('Desk lamp <special>');
+  await page.locator('[data-product-filter="active"]').click();
   await page.locator('#adminCloseBtn').click();
   await expect(page.locator('#navCartBadge')).toHaveText('0');
   await page.locator('[data-tab="wishlist"]').click();

@@ -4,6 +4,44 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — product archiving replaces plain deletion
+
+- Products can now be **archived** instead of deleted. Archiving stamps `archivedAt`, sets a derived `archived` flag, removes the product from the storefront grid, search, category counts, the featured hero, the inventory panel and the low-stock count, and removes it from bags and saved items. It stays in Admin under a new **Archived** filter and can be **restored** at any time with its stock, price and images intact.
+- `Store` gained `availableProducts` (the storefront view) alongside `products` (the full Admin view). Bag reconciliation now ignores archived products, so an archived item cannot be checked out.
+- Permanent deletion is now a deliberate two-step action: a product must be archived first, and **any product that appears in a past order is refused deletion outright** with a message pointing to archiving. This expresses the roadmap's "keep historical records auditable" rule in code. Unarchived, unsold products are never deleted by a single click.
+- Admin products table gained a Status column, an Active/Archived/All filter, archived row styling, and context-dependent actions: active rows offer Edit and Archive; archived rows offer Restore and Delete permanently.
+- An archived product's `?product=` URL now renders a **"No longer available"** page naming the product and linking back to the collection, instead of "Product not found". A bookmarked link or an old order reference no longer implies the product never existed.
+- This supersedes the previous single-click Delete behaviour. Deleting a product that has sales is no longer possible at all, so its order snapshots and analytics stay inspectable.
+
+### Verification — product archiving
+
+- Five new business-logic tests and two new DOM tests were written first and failed against the old code as expected, then passed after implementation. One test I wrote initially passed for the wrong reason: `/archive/i` matched both the new "archive first" message and the sales-guard message, so it did not actually prove the sales rule. It now pins `/appears in past orders/`.
+- **Mutation checks**: removing the sales guard fails exactly 1 test; removing the two-step rule fails exactly 2. Restored, all pass. This caught a genuinely hollow assertion before it shipped.
+- Two implementation bugs were found and fixed during the work: archiving removed saved items but not bag items (`reconcileCart` did not exclude archived products), and my first design did not enforce the approved archive-before-delete ordering.
+- `npm test` passed **25/25** (21 business-logic, 4 DOM) and `npm run test:e2e` passed **39/39** in Chromium 153. Two existing e2e tests that clicked a single click Delete were updated to the archive flow: the storefront one now archives and then deletes through the Archived filter, and the product-page one archives and expects "No longer available" instead of "Product not found".
+
+### Added — continuous integration (prepared, not active)
+
+- Prepared a CI workflow at [`ci/tests.yml`](ci/tests.yml): on every pull request and push to `main` it runs `npm ci`, `npm test`, `npx playwright install --with-deps chromium`, then `npm run test:e2e`, uploading `playwright-report/` and `test-results/` only when a step fails. GitHub-hosted `ubuntu-latest`, Node 22, npm caching, 15-minute timeout, read-only `contents` permission, actions pinned at `v7`.
+- **It is not active and does not run.** GitHub requires the file at `.github/workflows/tests.yml`, but pushing that path was rejected: the GitHub App connection for this repository lacks the `workflows` permission (`refusing to allow a GitHub App to create or update workflow … without workflows permission`). The file was therefore committed as `ci/tests.yml` so the branch stays pushable, and [`ci/README.md`](ci/README.md) documents both ways to activate it (create the file through the GitHub web editor, or push with a token that has the `workflow` scope).
+- No CI enforcement exists as a result. Green suites in PRs are still local runs until the file is moved into place.
+
+### Verification — continuous integration
+
+- Parsed the workflow with a YAML parser: valid, one `test` job, seven steps in the intended order, triggers `pull_request` and `push` to `main`.
+- Confirmed `npm ci` succeeds from `package.json`/`package-lock.json` alone in a clean directory, then simulated the CI steps there with the working tree copied in: `npm test` passed **18/18** and `npm run test:e2e` passed **38/38** (43.5 s) against a clean install.
+- Confirmed `actions/checkout`, `actions/setup-node` and `actions/upload-artifact` exist at `v7` and still declare the `node-version`, `cache`, `name`, `path` and `retention-days` inputs used. The earlier `v4` pins were updated after checking, since `v7` is current.
+- **Not verified:** any GitHub Actions run, because the workflow cannot be placed where GitHub looks for it with the current connection.
+
+### Deployment — PR #5 merged and production verified
+
+- **PR [#5](https://github.com/Immanuel9567/e-commerce-proj/pull/5) merged into `main`** as `8ae06a5` on 2026-11-05, covering 6 commits and 22 files (+848/−21). Mergeability was `MERGEABLE`/`CLEAN`; the Vercel preview check passed before merging. No CI workflows exist in the repository, so the green suites were local runs.
+- Verified what is actually live at https://e-commerce-proj-umber.vercel.app/ rather than trusting the deploy status: the rendered storefront lists 14 products whose images all resolve to `assets/images/…` (the eight new files included) with **no** `images.unsplash.com` references remaining, and the deployed `js/store.js` contains both the `ORDER_STATUS_FLOW` rules and the cent-level `promotionDiscount` (`subtotalCents * percent + 50`).
+- Vercel reported the `main` deployment as **success** (commit `8ae06a5`). This makes the previously merged product-detail and mobile-navigation work live as well.
+- **Not independently confirmed:** direct byte-level fetch of the eight new JPEGs. Sandbox `curl` to Vercel is blocked and the page-fetch proxy returns HTTP 500 for binary content. The files are part of the same deployed commit that the live page and scripts come from, so a missing asset would have to be a Vercel static-serving fault; this was not tested from a normal browser network.
+- Post-merge re-run on `main`: `npm test` **18/18** and `npm run test:e2e` **38/38** (43.4 s). A first `npm test` attempt reported 1 failure; the cause was `node_modules/jsdom` missing from the sandbox after the checkout, not the merged code. `npm install` restored it and the suite passed. Treat a `MODULE_NOT_FOUND` failure in `tests/ui.test.js` as a missing-install symptom, not a code defect.
+- Note for future sandboxes: `/tmp` is cleared between sessions, so the Chromium and `al2023` library artifacts described in the README must be regenerated with `npm install --prefix /tmp/chromepkg @sparticuz/chromium` before running the browser suite.
+
 ### Fixed — stale image fallback test
 
 - Rewrote the fallback test that the local-image change invalidated. It previously relied on `aura-05` pointing at Unsplash and being offline; it now fails the image request explicitly with `page.route('**/assets/images/prod_frenchpress.jpg', route => route.abort('failed'))` and still asserts the SVG category fallback renders and decodes.

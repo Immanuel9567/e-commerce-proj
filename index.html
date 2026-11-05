@@ -224,7 +224,12 @@
               <button type="submit" class="nm-btn-black">Save product</button>
             </form>
           </div>
-          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="adminProductBody"></tbody></table></div>
+          <nav class="admin-filter-pills" id="adminProductFilter" aria-label="Filter products by status">
+            <button type="button" class="admin-filter-pill active" data-product-filter="active" aria-pressed="true">Active</button>
+            <button type="button" class="admin-filter-pill" data-product-filter="archived" aria-pressed="false">Archived</button>
+            <button type="button" class="admin-filter-pill" data-product-filter="all" aria-pressed="false">All</button>
+          </nav>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminProductBody"></tbody></table></div>
         </section>
         <section class="admin-panel" id="admin-orders" hidden>
           <div class="admin-panel-header"><div><div class="section-kicker">FULFILMENT</div><h3>Orders</h3><p>Review and update customer orders.</p></div></div>

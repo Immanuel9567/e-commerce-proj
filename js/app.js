@@ -91,7 +91,7 @@ function attempt(action) {
 }
 
 function getFilteredProducts() {
-  let products = [...AppStore.products];
+  let products = [...AppStore.availableProducts];
   if (AppStore.activeCategory !== 'all') products = products.filter(product => product.category === AppStore.activeCategory);
   const query = AppStore.searchQuery.trim().toLowerCase();
   if (query) products = products.filter(product => [product.title, product.description, product.categoryName, ...(product.tags || [])].some(value => String(value).toLowerCase().includes(query)));
@@ -102,7 +102,7 @@ function getFilteredProducts() {
 }
 
 function renderProductGrid() {
-  const featured = AppStore.products.find(product => product.id === 'aura-01');
+  const featured = AppStore.availableProducts.find(product => product.id === 'aura-01') || AppStore.availableProducts[0];
   $('featuredHero').hidden = !featured;
   if (featured) {
     $('featuredPrice').textContent = money(featured.price);
@@ -173,7 +173,7 @@ function renderCartDrawer() {
     DOM.cartItemsList.innerHTML = `<div class="cart-empty"><div class="empty-circle" aria-hidden="true">○</div><h3>Your bag is empty.</h3><p>Find something made for your everyday.</p></div>`;
   } else {
     DOM.cartItemsList.innerHTML = AppStore.cart.map((item, index) => {
-      const product = AppStore.products.find(p => p.id === item.id);
+      const product = AppStore.availableProducts.find(p => p.id === item.id);
       if (!product) return '';
       return `<div class="cart-item">
         <a class="cart-item-img-well" ${productLinkAttributes(product)} aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'cart-item-img')}</a>
@@ -206,7 +206,7 @@ function updateProductSaved() {
 
 function updateProductAvailability() {
   if (!isProductRoute()) return;
-  const product = AppStore.products.find(item => item.id === productRouteId());
+  const product = AppStore.availableProducts.find(item => item.id === productRouteId());
   const addButton = $('productAddToCart');
   if (!product || !addButton) return;
   const available = Math.max(0, product.stock - AppStore.quantityInCart(product.id));
@@ -225,7 +225,10 @@ function renderProductPage(productId) {
   const focusColor = focused && focused.dataset.color;
   const focusSize = focused && focused.dataset.size;
   const product = AppStore.products.find(item => item.id === productId);
-  if (!product) {
+  if (product && product.archived) {
+    document.title = "No longer available | V8's";
+    DOM.productPageContent.innerHTML = `<div class="product-missing"><div class="section-kicker">THE COLLECTION</div><h1 id="productPageTitle" tabindex="-1">No longer available<span class="brand-dot">.</span></h1><p>${escapeHtml(product.title)} has been retired and is not for sale. Past orders that included it keep their details in your account.</p><a class="nm-btn" href="./#catalogSection" data-storefront-link="shop">Back to the collection</a></div>`;
+  } else if (!product) {
     document.title = "Product not found | V8's";
     DOM.productPageContent.innerHTML = `<div class="product-missing"><div class="section-kicker">THE COLLECTION</div><h1 id="productPageTitle" tabindex="-1">Product not found<span class="brand-dot">.</span></h1><p>This item may no longer be available on this device.</p></div>`;
   } else {
@@ -292,7 +295,7 @@ function goToStorefront(target = 'home', focusCollection = false) {
 }
 
 function renderWishlistModal() {
-  const items = AppStore.state.wishlist.map(id => AppStore.products.find(product => product.id === id)).filter(Boolean);
+  const items = AppStore.state.wishlist.map(id => AppStore.availableProducts.find(product => product.id === id)).filter(Boolean);
   DOM.wishlistItemsList.innerHTML = items.length ? items.map(product => `<div class="saved-item"><a class="cart-item-img-well" ${productLinkAttributes(product)} aria-label="View ${escapeHtml(product.title)}">${productImage(product, 'cart-item-img')}</a><div class="cart-item-details"><h3 class="cart-item-title"><a ${productLinkAttributes(product)}>${escapeHtml(product.title)}</a></h3><div class="cart-item-price">${money(product.price)}</div></div><div class="saved-actions"><button type="button" class="nm-btn compact" data-action="wishlist-to-cart" data-id="${escapeHtml(product.id)}" ${product.stock - AppStore.quantityInCart(product.id) <= 0 ? 'disabled' : ''}>Add to bag</button><button type="button" class="text-action danger-text" data-action="remove-wishlist" data-id="${escapeHtml(product.id)}">Remove</button></div></div>`).join('') : `<div class="list-empty"><h3>Nothing saved yet.</h3><p>Your saved objects will appear here.</p></div>`;
 }
 
@@ -380,12 +383,33 @@ function renderAdminPanel() {
   renderAdminDiscounts();
 }
 
+let adminProductFilter = 'active';
+
+function productActions(product) {
+  const id = escapeHtml(product.id);
+  if (product.archived) {
+    return `<div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="restore-product" data-id="${id}">Restore</button><button type="button" class="admin-action-btn danger" data-admin-action="delete-product" data-id="${id}">Delete permanently</button></div>`;
+  }
+  return `<div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="edit-product" data-id="${id}">Edit</button><button type="button" class="admin-action-btn" data-admin-action="archive-product" data-id="${id}">Archive</button></div>`;
+}
+
 function renderAdminProducts() {
-  $('adminProductBody').innerHTML = AppStore.products.length ? AppStore.products.map(product => `<tr>
+  document.querySelectorAll('[data-product-filter]').forEach(pill => {
+    const active = pill.dataset.productFilter === adminProductFilter;
+    pill.classList.toggle('active', active);
+    pill.setAttribute('aria-pressed', String(active));
+  });
+  const all = AppStore.products;
+  const visible = adminProductFilter === 'all' ? all : all.filter(product => adminProductFilter === 'archived' ? product.archived : !product.archived);
+  const emptyMessage = adminProductFilter === 'archived'
+    ? 'No archived products.'
+    : adminProductFilter === 'active' ? 'No active products yet.' : 'No products yet.';
+  $('adminProductBody').innerHTML = visible.length ? visible.map(product => `<tr${product.archived ? ' class="admin-row-archived"' : ''}>
     <td data-label="Product"><div><strong>${escapeHtml(product.title)}</strong><span class="admin-subline">${escapeHtml((product.tags || []).join(' · ') || product.id)}</span></div></td>
     <td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Price">${money(product.price)}</td><td data-label="Stock">${product.stock}</td>
-    <td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="edit-product" data-id="${escapeHtml(product.id)}">Edit</button><button type="button" class="admin-action-btn danger" data-admin-action="delete-product" data-id="${escapeHtml(product.id)}">Delete</button></div></td>
-  </tr>`).join('') : '<tr><td colspan="5" class="table-empty">No products yet.</td></tr>';
+    <td data-label="Status"><span class="admin-status-badge ${product.archived ? 'status-archived' : 'status-ok'}">${product.archived ? 'Archived' : 'Active'}</span></td>
+    <td data-label="Actions">${productActions(product)}</td>
+  </tr>`).join('') : `<tr><td colspan="6" class="table-empty">${emptyMessage}</td></tr>`;
 }
 
 function orderStatusControl(order) {
@@ -430,10 +454,10 @@ function renderOrderDetails(reference) {
 }
 
 function renderAdminInventory() {
-  const low = AppStore.products.filter(product => product.stock > 0 && product.stock < 5).length;
-  const out = AppStore.products.filter(product => product.stock === 0).length;
+  const low = AppStore.availableProducts.filter(product => product.stock > 0 && product.stock < 5).length;
+  const out = AppStore.availableProducts.filter(product => product.stock === 0).length;
   $('inventorySummary').innerHTML = `<strong>${low + out}</strong><span>${low + out === 1 ? 'product needs' : 'products need'} attention</span><span class="inventory-summary-detail">${low} low stock · ${out} out of stock</span>`;
-  $('adminInventoryBody').innerHTML = AppStore.products.length ? AppStore.products.map(product => {
+  $('adminInventoryBody').innerHTML = AppStore.availableProducts.length ? AppStore.availableProducts.map(product => {
     const status = product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'ok';
     const label = status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'In stock';
     return `<tr><td data-label="Product"><strong>${escapeHtml(product.title)}</strong></td><td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Stock quantity"><input class="stock-input" type="number" min="0" step="1" value="${product.stock}" data-stock-id="${escapeHtml(product.id)}" aria-label="Stock for ${escapeHtml(product.title)}"></td><td data-label="Status"><span class="admin-status-badge status-${status}">${label}</span></td><td data-label="Update"><button type="button" class="admin-action-btn" data-admin-action="save-stock" data-id="${escapeHtml(product.id)}">Save stock</button></td></tr>`;
@@ -731,6 +755,10 @@ function initEventListeners() {
     document.querySelectorAll('.admin-tab').forEach(item => { item.classList.toggle('active', item === tab); if (item === tab) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); });
     document.querySelectorAll('.admin-panel').forEach(panel => { const active = panel.id === `admin-${tab.dataset.admin}`; panel.classList.toggle('active', active); panel.hidden = !active; });
   }));
+  document.querySelectorAll('[data-product-filter]').forEach(pill => pill.addEventListener('click', () => {
+    adminProductFilter = pill.dataset.productFilter;
+    renderAdminProducts();
+  }));
   $('addProductBtn').addEventListener('click', () => openProductEditor(null));
   $('cancelProductEdit').addEventListener('click', () => { $('adminProductEditor').hidden = true; });
   $('adminProductForm').addEventListener('submit', async event => {
@@ -768,9 +796,27 @@ function initEventListeners() {
     const action = button.dataset.adminAction;
     const id = button.dataset.id;
     if (action === 'edit-product') openProductEditor(AppStore.products.find(product => product.id === id));
+    if (action === 'archive-product') {
+      const product = AppStore.products.find(item => item.id === id);
+      if (product) requestConfirmation(
+        'Archive product?',
+        `Archive ${product.title}? It leaves the storefront, search and inventory and is removed from bags and saved items on this device. Past orders keep their details, and you can restore it later.`,
+        'Archive product',
+        () => { AppStore.archiveProduct(id); refreshStorefront(); renderAdminPanel(); showToast('Product archived'); }
+      );
+    }
+    if (action === 'restore-product') {
+      const saved = attempt(() => { AppStore.restoreProduct(id); return true; });
+      if (saved) { refreshStorefront(); renderAdminProducts(); showToast('Product restored'); }
+    }
     if (action === 'delete-product') {
       const product = AppStore.products.find(item => item.id === id);
-      if (product) requestConfirmation('Delete product?', `Delete ${product.title}? It will also be removed from saved items and bags on this device.`, 'Delete product', () => { AppStore.deleteProduct(id); refreshStorefront(); renderAdminPanel(); showToast('Product deleted'); });
+      if (product) requestConfirmation(
+        'Delete permanently?',
+        `Permanently delete ${product.title}? This cannot be undone. Only archived products with no past orders can be deleted.`,
+        'Delete permanently',
+        () => { AppStore.deleteProduct(id); refreshStorefront(); renderAdminPanel(); showToast('Product deleted'); }
+      );
     }
     if (action === 'save-stock') {
       const input = Array.from(document.querySelectorAll('[data-stock-id]')).find(item => item.dataset.stockId === id);

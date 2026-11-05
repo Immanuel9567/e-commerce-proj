@@ -240,9 +240,11 @@ test('product details reflect changes from another tab without losing variant fo
   await expect(other.locator('#productAddToCart')).toHaveText('Out of stock');
   await page.locator('[data-admin="products"]').click();
   const productRow = page.locator('#adminProductBody tr').filter({ hasText: 'Bauhaus Chronograph Mono' });
-  await productRow.getByRole('button', { name: 'Delete' }).click();
+  // Retiring a product is an archive step; a sold or active product cannot be
+  // deleted outright, so the open detail page reports it as retired.
+  await productRow.getByRole('button', { name: 'Archive' }).click();
   await page.locator('#confirmAccept').click();
-  await expect(other.getByRole('heading', { level: 1, name: /Product not found/ })).toBeFocused();
+  await expect(other.getByRole('heading', { level: 1, name: /No longer available/ })).toBeFocused();
   await other.close();
 });
 

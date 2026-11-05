@@ -23,7 +23,8 @@ Promotions can be percentage or fixed-amount codes, or automatic sales with opti
 ## Important limitations
 
 - This is not a production admin system: anyone using the page can open Admin, data is not shared between devices, and clearing browser storage removes it. Do not enter real customer or payment information.
-- Checkout does not collect payment or submit a real order. Refunds only record a local status; no money is returned. Stock is reduced when a local order is placed; cancellations and refunds do not automatically restock items.
+- Checkout does not collect payment or submit a real order. Refunds only record a local status; no money is returned. Stock is reduced when a local order is placed; cancellations restock items, refunds do not.
+- Products are retired by **archiving**, not deleting. Archiving removes a product from the storefront, search, inventory and low-stock counts, and from bags and saved items, but keeps it in Admin under the **Archived** filter with every past order intact, and it can be restored. Permanent deletion is a two-step action available only on archived products, and it is refused outright for any product that appears in a past order.
 - The earlier checkout generated reference codes without saving orders. Those past codes cannot be recovered from the old application; new orders retain the same reference in Account and Admin.
 - A production deployment needs authenticated, role-restricted server/database access, shared storage, a payment provider and verified payment/refund events. Client-side access controls and local storage are not a security boundary.
 
@@ -45,6 +46,8 @@ LD_LIBRARY_PATH=/path/to/al2023/lib PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to
 ```
 
 This was verified with Chromium 153 in a Debian 12 sandbox; it does not replace a normal Playwright browser install for day-to-day use.
+
+A CI workflow is prepared in [`ci/tests.yml`](ci/tests.yml) but is **not active yet**: the repository connection cannot write to `.github/workflows/`. See [`ci/README.md`](ci/README.md) to switch it on. Until then, run both suites locally before opening a pull request.
 
 `npm test` runs two suites and needs no browser:
 

@@ -69,6 +69,7 @@ class Store {
   normalizeProduct(product) {
     const category = STORE_CATEGORIES[product.category] ? product.category : 'audio';
     const stock = Number.isFinite(Number(product.stock)) ? Math.max(0, Math.floor(Number(product.stock))) : (product.inStock === false ? 0 : 10);
+    const archivedAt = product.archivedAt ? String(product.archivedAt) : '';
     const title = String(product.title || product.name || 'Untitled product');
     const tags = Array.isArray(product.tags) ? product.tags.map(String).filter(Boolean) : (product.badge ? [String(product.badge)] : []);
     return {
@@ -88,14 +89,17 @@ class Store {
       colors: Array.isArray(product.colors) && product.colors.length ? product.colors : ['#111215'],
       sizes: Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['Standard'],
       rating: Number(product.rating) || 0,
-      reviewsCount: Number(product.reviewsCount) || 0
+      reviewsCount: Number(product.reviewsCount) || 0,
+      archivedAt,
+      archived: Boolean(archivedAt)
     };
   }
 
   reconcileCart(cart, products = this.state.products) {
+    const available = products.filter(product => !product.archived);
     const used = new Map();
     return cart.reduce((result, item) => {
-      const product = products.find(p => p.id === item.id);
+      const product = available.find(p => p.id === item.id);
       if (!product) return result;
       const quantity = Math.min(Math.max(0, Math.floor(Number(item.quantity) || 0)), Math.max(0, product.stock - (used.get(product.id) || 0)));
       if (!quantity) return result;
@@ -110,7 +114,10 @@ class Store {
     }, []);
   }
 
+  // Admin lists every product, including archived ones. The storefront, bag,
+  // saved items and stock alerts only consider available products.
   get products() { return this.state.products; }
+  get availableProducts() { return this.state.products.filter(product => !product.archived); }
   get cart() { return this.state.cart; }
   get orders() { return this.state.orders; }
   get promotions() { return this.state.promotions; }
@@ -125,7 +132,7 @@ class Store {
   }
 
   addToCart(productId, quantity = 1, options = {}) {
-    const product = this.products.find(p => p.id === productId);
+    const product = this.availableProducts.find(p => p.id === productId);
     if (!product) throw new Error('This product is no longer available.');
     quantity = Math.floor(Number(quantity));
     if (!Number.isFinite(quantity) || quantity < 1) throw new Error('Choose a valid quantity.');
@@ -157,7 +164,7 @@ class Store {
   }
 
   toggleWishlist(productId) {
-    if (!this.products.some(product => product.id === productId)) throw new Error('This product is no longer available.');
+    if (!this.availableProducts.some(product => product.id === productId)) throw new Error('This product is no longer available.');
     const exists = this.state.wishlist.includes(productId);
     const wishlist = exists ? this.state.wishlist.filter(id => id !== productId) : [...this.state.wishlist, productId];
     this.commit({ wishlist });
@@ -248,7 +255,38 @@ class Store {
     this.commit({ products, cart: this.reconcileCart(this.cart, products) });
   }
 
+  productHasSales(id) {
+    return this.orders.some(order => (order.items || []).some(item => item.id === id));
+  }
+
+  archiveProduct(id) {
+    const product = this.products.find(item => item.id === id);
+    if (!product) throw new Error('This product is no longer available.');
+    if (product.archived) return product;
+    const products = this.products.map(item => item.id === id ? { ...item, archivedAt: this.now().toISOString(), archived: true } : item);
+    this.commit({ products, cart: this.reconcileCart(this.cart, products), wishlist: this.state.wishlist.filter(itemId => itemId !== id) });
+    return products.find(item => item.id === id);
+  }
+
+  restoreProduct(id) {
+    const product = this.products.find(item => item.id === id);
+    if (!product) throw new Error('This product is no longer available.');
+    const products = this.products.map(item => item.id === id ? { ...item, archivedAt: '', archived: false } : item);
+    this.commit({ products });
+    return products.find(item => item.id === id);
+  }
+
+  // Permanent deletion is a two-step mistake-fix, not a way to retire a product:
+  // the product must be archived first, and anything that has been sold can never
+  // be deleted, so its order history stays inspectable.
   deleteProduct(id) {
+    const product = this.products.find(item => item.id === id);
+    if (this.productHasSales(id)) {
+      throw new Error('This product appears in past orders, so it can only be archived. Archive it instead to keep its order history.');
+    }
+    if (product && !product.archived) {
+      throw new Error('Archive this product before deleting it permanently.');
+    }
     const products = this.products.filter(product => product.id !== id);
     this.commit({ products, cart: this.reconcileCart(this.cart, products), wishlist: this.state.wishlist.filter(itemId => itemId !== id) });
   }
@@ -402,7 +440,7 @@ class Store {
       existing.quantity += Number(item.quantity) || 0;
       sales.set(item.id, existing);
     }));
-    return { revenue, orderCount: orders.length, average: orders.length ? revenue / orders.length : 0, lowStock: this.products.filter(product => product.stock < 5).length, days, topProducts: Array.from(sales.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 5) };
+    return { revenue, orderCount: orders.length, average: orders.length ? revenue / orders.length : 0, lowStock: this.availableProducts.filter(product => product.stock < 5).length, days, topProducts: Array.from(sales.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 5) };
   }
 }
 
