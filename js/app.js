@@ -388,8 +388,20 @@ function renderAdminProducts() {
   </tr>`).join('') : '<tr><td colspan="5" class="table-empty">No products yet.</td></tr>';
 }
 
+function orderStatusControl(order) {
+  if (order.status === 'refunded') return '<span class="admin-status-badge status-refunded">Refunded</span>';
+  const next = nextOrderStatusesFor(order.status);
+  // A terminal order has no legal next step: show its state instead of a dead dropdown.
+  if (!next.length) return `<span class="admin-status-badge status-${escapeHtml(order.status)}">${escapeHtml(titleCase(order.status))}</span>`;
+  return `<select class="admin-status-select" data-admin-action="order-status" data-reference="${escapeHtml(order.reference)}" aria-label="Status for ${escapeHtml(order.reference)}">${[order.status, ...next].map(status => `<option value="${escapeHtml(status)}" ${status === order.status ? 'selected' : ''}>${escapeHtml(titleCase(status))}</option>`).join('')}</select>`;
+}
+
+function refundAction(order) {
+  if (!refundableStatuses.includes(order.status)) return '';
+  return `<button type="button" class="admin-action-btn danger" data-admin-action="refund" data-reference="${escapeHtml(order.reference)}">Record refund</button>`;
+}
+
 function renderAdminOrders() {
-  const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
   $('adminOrderBody').innerHTML = AppStore.orders.length ? AppStore.orders.map(order => {
     const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
     return `<tr>
@@ -397,8 +409,8 @@ function renderAdminOrders() {
       <td data-label="Customer"><div><strong>${escapeHtml(order.customer.name)}</strong><span class="admin-subline">${escapeHtml(order.customer.email)}</span></div></td>
       <td data-label="Items"><details class="order-items-details"><summary>${count} ${count === 1 ? 'item' : 'items'}</summary>${order.items.map(item => `<span>${escapeHtml(item.title)} × ${item.quantity}</span>`).join('')}</details></td>
       <td data-label="Total">${money(order.total)}</td>
-      <td data-label="Status">${order.status === 'refunded' ? '<span class="admin-status-badge status-refunded">Refunded</span>' : `<select class="admin-status-select" data-admin-action="order-status" data-reference="${escapeHtml(order.reference)}" aria-label="Status for ${escapeHtml(order.reference)}">${statuses.map(status => `<option value="${status}" ${status === order.status ? 'selected' : ''}>${titleCase(status)}</option>`).join('')}</select>`}</td>
-      <td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="order-details" data-reference="${escapeHtml(order.reference)}">View details</button>${!['refunded', 'cancelled'].includes(order.status) ? `<button type="button" class="admin-action-btn danger" data-admin-action="refund" data-reference="${escapeHtml(order.reference)}">Record refund</button>` : ''}</div></td>
+      <td data-label="Status">${orderStatusControl(order)}</td>
+      <td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="order-details" data-reference="${escapeHtml(order.reference)}">View details</button>${refundAction(order)}</div></td>
     </tr>`;
   }).join('') : '<tr><td colspan="6" class="table-empty">No orders yet.</td></tr>';
   const details = $('orderDetails');

@@ -8,6 +8,22 @@ The current site is a static HTML/CSS/JavaScript storefront with a browser-local
 
 The source plan's schema → security → APIs → admin lists → forms → analytics sequence is retained below. The current local UI is a prototype to preserve and adapt, not proof that the future backend phases are complete.
 
+## Progress log
+
+Completed work that is **not** a roadmap phase, recorded so the current state is visible. Every phase below is still **not started**; this log does not move a phase forward. Details and verification live in [CHANGELOG.md](CHANGELOG.md).
+
+| Date | Step | Where | Status |
+| --- | --- | --- | --- |
+| 2026-10-30 | Browser-local storefront, admin demo, promotions, local analytics, tests and docs | `js/`, `css/`, `index.html`, `tests/` | Done — not deployed on its own |
+| 2026-10-30 | Dedicated reloadable product detail pages; simplified hero; checkout-inverse variant colors | `js/app.js`, `js/products.js` | Done |
+| 2026-10-30 | Mobile bottom navigation pill, tap-highlight suppression, theme gradient notices | `css/style.css`, `js/app.js` | Done |
+| 2026-11-05 | Percentage discounts round half up at the cent level; order status flow and refund eligibility enforced in the store and mirrored in the admin UI; jsdom DOM tests added to `npm test` | `js/store.js`, `js/app.js`, `tests/` | Done — not deployed; Playwright suite not run |
+| 2026-11-05 | Working rules added: a roadmap progress log after every step, and a per-step check-in questionnaire that must mark a recommended option | `agent.md`, `AGENTS.md`, `ROADMAP.md` | Done — docs only |
+| 2026-11-05 | All 14 built-in product images are now local generated assets; the 8 Unsplash hotlinks are gone and a test enforces local files | `js/products.js`, `assets/images/`, `tests/store.test.js` | Done — not deployed |
+| 2026-11-05 | Playwright suite made runnable in the sandbox via an npm-shipped Chromium 153 and its libraries; fallback tests rewritten to force a real load failure | `README.md`, `tests/e2e/product-page.spec.js` | Done — full suite green, **38/38** |
+
+Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
+
 ## Decisions and approval gates
 
 Before starting a phase, agree on its design, acceptance criteria, dependencies and rollout/rollback. Do not create a Supabase project, apply migrations, connect payment services or migrate customer data without the owner's approval.

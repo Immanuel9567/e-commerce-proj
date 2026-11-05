@@ -11,6 +11,18 @@ const DEFAULT_PROMOTIONS = [
   { code: 'MONO15', percent: 15, active: true, start: '', end: '' },
   { code: 'VIP25', percent: 25, active: true, start: '', end: '' }
 ];
+// Fulfilment is a one-way path: an order may only move to a listed next status.
+// Cancelling is allowed until delivery; refunds are recorded separately by refundOrder.
+const ORDER_STATUS_FLOW = {
+  pending: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+  refunded: []
+};
+const nextOrderStatusesFor = status => [...(ORDER_STATUS_FLOW[status] || [])];
+const refundableStatuses = ['shipped', 'delivered'];
 
 class Store {
   constructor(seedProducts, storage, now = () => new Date()) {
@@ -196,7 +208,12 @@ class Store {
   promotionDiscount(promotion, subtotal) {
     if (promotion.type === 'amount') return Math.min(subtotal, Math.max(0, Number(promotion.amount) || 0));
     const percent = Math.min(100, Math.max(0, Number(promotion.percent) || 0));
-    return Math.min(subtotal, Math.round(subtotal * percent) / 100);
+    // Work in whole cents so rounding happens at the cent level, half up.
+    // Rounding the dollar figure first (subtotal * percent) mis-rounds exact
+    // half-cent ties such as 15% of 4.10 (= 0.615).
+    const subtotalCents = Math.round(subtotal * 100);
+    const discountCents = Math.floor((subtotalCents * percent + 50) / 100);
+    return Math.min(subtotal, discountCents / 100);
   }
 
   saveProduct(input) {
@@ -307,16 +324,46 @@ class Store {
     return order;
   }
 
-  updateOrderStatus(reference, status) {
-    if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) throw new Error('Choose a valid order status.');
+  nextOrderStatuses(reference) {
     const order = this.orders.find(item => item.reference === reference);
-    if (!order || order.status === 'refunded') throw new Error('This order cannot be updated.');
-    this.commit({ orders: this.orders.map(item => item.reference === reference ? { ...item, status } : item) });
+    if (!order) throw new Error('This order could not be found.');
+    return nextOrderStatusesFor(order.status);
+  }
+
+  updateOrderStatus(reference, status) {
+    if (!Object.prototype.hasOwnProperty.call(ORDER_STATUS_FLOW, status)) throw new Error('Choose a valid order status.');
+    const order = this.orders.find(item => item.reference === reference);
+    if (!order) throw new Error('This order could not be found.');
+    if (order.status === 'refunded') throw new Error('This order cannot be updated.');
+    const allowed = ORDER_STATUS_FLOW[order.status] || [];
+    if (!allowed.length) throw new Error(`This order is ${order.status} and cannot be updated.`);
+    if (!allowed.includes(status)) {
+      throw new Error(`This order can only move from ${order.status} to ${allowed.join(' or ')}.`);
+    }
+    const products = status === 'cancelled' ? this.restockOrderItems(order) : this.products;
+    this.commit({ products, orders: this.orders.map(item => item.reference === reference ? { ...item, status } : item) });
+  }
+
+  restockOrderItems(order) {
+    const sold = new Map();
+    (order.items || []).forEach(item => sold.set(item.id, (sold.get(item.id) || 0) + (Number(item.quantity) || 0)));
+    return this.products.map(product => {
+      const quantity = sold.get(product.id) || 0;
+      if (!quantity) return product;
+      const stock = product.stock + quantity;
+      return { ...product, stock, inStock: stock > 0 };
+    });
   }
 
   refundOrder(reference) {
     const order = this.orders.find(item => item.reference === reference);
-    if (!order || order.status === 'refunded' || order.status === 'cancelled') throw new Error('This order cannot be refunded.');
+    if (!order || order.status === 'refunded') throw new Error('This order cannot be refunded.');
+    // Only record a refund for something that was actually dispatched.
+    if (!refundableStatuses.includes(order.status)) {
+      throw new Error(order.status === 'cancelled'
+        ? 'This order was cancelled, so it cannot be refunded.'
+        : 'This order can only be refunded after it is shipped or delivered.');
+    }
     this.commit({ orders: this.orders.map(item => item.reference === reference ? { ...item, status: 'refunded', refundedAt: this.now().toISOString(), refundAmount: item.total } : item) });
   }
 
@@ -359,4 +406,4 @@ class Store {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { Store, STORE_STATE_KEY, STORE_CATEGORIES };
+if (typeof module !== 'undefined' && module.exports) module.exports = { Store, STORE_STATE_KEY, STORE_CATEGORIES, ORDER_STATUS_FLOW, nextOrderStatusesFor, refundableStatuses };

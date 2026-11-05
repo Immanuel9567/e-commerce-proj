@@ -107,6 +107,9 @@ test('checkout saves reference and status to account, inventory, analytics and c
   await page.getByRole('button', { name: 'View details' }).click();
   await expect(page.locator('#orderDetails')).toContainText('1 Main Street');
   await expect(page.locator('#orderDetails')).toContainText('Credit Card');
+  // Fulfilment is a one-way path: pending -> processing -> shipped.
+  await page.locator('[data-admin-action="order-status"]').selectOption('processing');
+  await expect(page.locator('#orderDetails')).toContainText('Processing');
   await page.locator('[data-admin-action="order-status"]').selectOption('shipped');
   await expect(page.locator('#orderDetails')).toContainText('Shipped');
   await page.locator('[data-admin="customers"]').click();

@@ -102,6 +102,7 @@ test('status, customer history and recorded refunds feed analytics consistently'
   const store = makeStore();
   store.addToCart('one');
   const order = store.placeOrder(details);
+  store.updateOrderStatus(order.reference, 'processing');
   store.updateOrderStatus(order.reference, 'shipped');
   assert.equal(store.orders[0].status, 'shipped');
   store.setCustomerStatus('ada@example.com', 'blocked');
@@ -145,4 +146,114 @@ test('fixed vouchers and automatic sales choose the best active sale unless a co
   store.applyPromo('VOUCHER');
   assert.equal(store.getCartTotals().discount, 100);
   assert.equal(store.getCartTotals().total, 15);
+});
+
+test('percentage discounts round half a cent up consistently at the cent level', () => {
+  // 4.10 * 15% is exactly 0.615, and 20.10 * 5% is exactly 1.005. Both are exact
+  // half-cent ties, so both must round up by the same rule. The old formula
+  // rounded the dollar figure instead of the cents, so it rounded both down.
+  const percentStore = new Store([{ id: 'tie', title: 'Tie Product', category: 'audio', price: 4.10, stock: 10 }], new MemoryStorage(), fixedDate);
+  percentStore.addPromotion({ code: 'FIFTEEN', type: 'percent', value: 15 });
+  percentStore.addToCart('tie');
+  percentStore.applyPromo('FIFTEEN');
+  assert.equal(percentStore.getCartTotals().discount, 0.62);
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 15 }, 4.10), 0.62);
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 5 }, 20.10), 1.01);
+
+  // Ordinary values must not move.
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 15 }, 100), 15);
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 10 }, 45.55), 4.56);
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 33 }, 19.99), 6.6);
+  // A discount can never exceed the subtotal.
+  assert.equal(percentStore.promotionDiscount({ type: 'percent', percent: 100 }, 12.34), 12.34);
+});
+
+test('order status follows the fulfilment path and rejects illegal jumps and reversals', () => {
+  const store = makeStore();
+  store.addToCart('one');
+  const order = store.placeOrder(details);
+  assert.equal(order.status, 'pending');
+
+  assert.throws(() => store.updateOrderStatus(order.reference, 'delivered'), /pending to processing/);
+  assert.equal(store.orders[0].status, 'pending');
+
+  store.updateOrderStatus(order.reference, 'processing');
+  assert.throws(() => store.updateOrderStatus(order.reference, 'pending'), /processing to shipped/);
+  store.updateOrderStatus(order.reference, 'shipped');
+  store.updateOrderStatus(order.reference, 'delivered');
+  assert.throws(() => store.updateOrderStatus(order.reference, 'shipped'), /delivered/);
+
+  // Cancelling is only legal before dispatch, and is terminal.
+  store.addToCart('one');
+  const second = store.placeOrder(details);
+  store.updateOrderStatus(second.reference, 'cancelled');
+  assert.throws(() => store.updateOrderStatus(second.reference, 'processing'), /cancelled/);
+  assert.throws(() => store.refundOrder(second.reference), /cannot be refunded/);
+
+  // shipped -> cancelled stays legal so an undeliverable parcel can be stopped.
+  store.addToCart('one');
+  const third = store.placeOrder(details);
+  store.updateOrderStatus(third.reference, 'processing');
+  store.updateOrderStatus(third.reference, 'shipped');
+  store.updateOrderStatus(third.reference, 'cancelled');
+  assert.equal(store.orders.find(item => item.reference === third.reference).status, 'cancelled');
+
+  assert.throws(() => store.updateOrderStatus(order.reference, 'teleported'), /valid order status/);
+  store.addToCart('one');
+  const fourth = store.placeOrder(details);
+  assert.deepEqual(store.nextOrderStatuses(fourth.reference), ['processing', 'cancelled']);
+  assert.deepEqual(store.nextOrderStatuses(order.reference), []);
+});
+
+test('cancelling an order restocks its items exactly once', () => {
+  const store = makeStore();
+  store.addToCart('one', 2);
+  const order = store.placeOrder(details);
+  assert.equal(store.products[0].stock, 1);
+  store.updateOrderStatus(order.reference, 'cancelled');
+  assert.equal(store.products[0].stock, 3);
+  assert.throws(() => store.updateOrderStatus(order.reference, 'processing'), /cancelled/);
+  assert.equal(store.products[0].stock, 3);
+});
+
+test('refunded orders cannot move status and require a delivered or shipped order', () => {
+  const store = makeStore();
+  store.addToCart('one');
+  const order = store.placeOrder(details);
+  // Refunding something never dispatched is not a fulfilment action.
+  assert.throws(() => store.refundOrder(order.reference), /shipped or delivered/);
+  store.updateOrderStatus(order.reference, 'processing');
+  store.updateOrderStatus(order.reference, 'shipped');
+  store.refundOrder(order.reference);
+  assert.equal(store.orders[0].status, 'refunded');
+  assert.throws(() => store.updateOrderStatus(order.reference, 'delivered'), /cannot be updated/);
+});
+
+test('the refund rule keeps analytics and customers consistent for shipped orders', () => {
+  const store = makeStore();
+  store.addToCart('one', 2);
+  store.applyPromo('AURA15');
+  const order = store.placeOrder(details);
+  assert.equal(order.total, 170);
+  store.updateOrderStatus(order.reference, 'processing');
+  store.updateOrderStatus(order.reference, 'shipped');
+  store.refundOrder(order.reference);
+  assert.equal(store.orders[0].refundAmount, 170);
+  assert.equal(store.getAnalytics().revenue, 0);
+  assert.equal(store.getCustomers()[0].spent, 0);
+  // A refund is terminal and must not restock by itself.
+  assert.equal(store.products[0].stock, 1);
+  assert.throws(() => store.updateOrderStatus(order.reference, 'delivered'), /cannot be updated/);
+});
+
+test('every built-in product image is a local file that exists', () => {
+  const path = require('node:path');
+  const fs = require('node:fs');
+  const { PRODUCTS } = require('../js/products.js');
+  const root = path.join(__dirname, '..');
+  assert.equal(PRODUCTS.length, 14);
+  for (const product of PRODUCTS) {
+    assert.match(product.image, /^assets\/images\/[\w.-]+\.(jpg|png|webp)$/, `${product.id} must use a local asset, got ${product.image}`);
+    assert.ok(fs.existsSync(path.join(root, product.image)), `${product.id} image is missing: ${product.image}`);
+  }
 });
