@@ -84,3 +84,45 @@ test('fixed-amount sales apply automatically and can be disabled', async ({ page
   await expect(page.locator('#cartDiscountRow')).toBeHidden();
   await expect(page.locator('#cartTotal')).toHaveText('$299.00');
 });
+
+test('archiving a product retires it from the storefront and keeps it restorable', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="products"]').click();
+
+  // Archive the featured product, which is also the hero.
+  const row = page.locator('#adminProductBody tr').filter({ hasText: 'AURA ANC Over-Ear' });
+  await row.getByRole('button', { name: 'Archive' }).click();
+  await expect(page.locator('#confirmMessage')).toContainText('Past orders keep their details');
+  await page.locator('#confirmAccept').click();
+  await expect(page.locator('#toastContainer')).toContainText('Product archived');
+  await expect(page.locator('#adminProductBody')).not.toContainText('AURA ANC Over-Ear');
+
+  // The archived filter shows it with Restore, and permanent delete only appears there.
+  await page.locator('[data-product-filter="archived"]').click();
+  const archivedRow = page.locator('#adminProductBody tr').filter({ hasText: 'AURA ANC Over-Ear' });
+  await expect(archivedRow).toContainText('Archived');
+  await expect(archivedRow.getByRole('button', { name: 'Delete permanently' })).toBeVisible();
+  await page.locator('#adminCloseBtn').click();
+
+  // Storefront no longer lists it, and its old URL says it is retired.
+  await expect(page.locator('#productGrid a[data-product-link="aura-01"]')).toHaveCount(0);
+  await expect(page.locator('#resultsCount')).toContainText('Showing 13 objects');
+  await page.goto('/?product=aura-01');
+  await expect(page.locator('#productPageContent')).toContainText('No longer available');
+  await expect(page.locator('#productPageContent')).not.toContainText('Product not found');
+  await expect(page.locator('#productAddToCart')).toHaveCount(0);
+
+  // Restore and confirm it returns with stock intact.
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="products"]').click();
+  await page.locator('[data-product-filter="archived"]').click();
+  await page.locator('#adminProductBody tr').filter({ hasText: 'AURA ANC Over-Ear' }).getByRole('button', { name: 'Restore' }).click();
+  await expect(page.locator('#toastContainer')).toContainText('Product restored');
+  await page.locator('[data-product-filter="active"]').click();
+  await expect(page.locator('#adminProductBody')).toContainText('AURA ANC Over-Ear');
+  await page.locator('#adminCloseBtn').click();
+  await expect(page.locator('#resultsCount')).toContainText('Showing 14 objects');
+});

@@ -23,7 +23,8 @@ Promotions can be percentage or fixed-amount codes, or automatic sales with opti
 ## Important limitations
 
 - This is not a production admin system: anyone using the page can open Admin, data is not shared between devices, and clearing browser storage removes it. Do not enter real customer or payment information.
-- Checkout does not collect payment or submit a real order. Refunds only record a local status; no money is returned. Stock is reduced when a local order is placed; cancellations and refunds do not automatically restock items.
+- Checkout does not collect payment or submit a real order. Refunds only record a local status; no money is returned. Stock is reduced when a local order is placed; cancellations restock items, refunds do not.
+- Products are retired by **archiving**, not deleting. Archiving removes a product from the storefront, search, inventory and low-stock counts, and from bags and saved items, but keeps it in Admin under the **Archived** filter with every past order intact, and it can be restored. Permanent deletion is a two-step action available only on archived products, and it is refused outright for any product that appears in a past order.
 - The earlier checkout generated reference codes without saving orders. Those past codes cannot be recovered from the old application; new orders retain the same reference in Account and Admin.
 - A production deployment needs authenticated, role-restricted server/database access, shared storage, a payment provider and verified payment/refund events. Client-side access controls and local storage are not a security boundary.
 

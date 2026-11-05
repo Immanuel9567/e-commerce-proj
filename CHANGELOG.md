@@ -4,6 +4,22 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — product archiving replaces plain deletion
+
+- Products can now be **archived** instead of deleted. Archiving stamps `archivedAt`, sets a derived `archived` flag, removes the product from the storefront grid, search, category counts, the featured hero, the inventory panel and the low-stock count, and removes it from bags and saved items. It stays in Admin under a new **Archived** filter and can be **restored** at any time with its stock, price and images intact.
+- `Store` gained `availableProducts` (the storefront view) alongside `products` (the full Admin view). Bag reconciliation now ignores archived products, so an archived item cannot be checked out.
+- Permanent deletion is now a deliberate two-step action: a product must be archived first, and **any product that appears in a past order is refused deletion outright** with a message pointing to archiving. This expresses the roadmap's "keep historical records auditable" rule in code. Unarchived, unsold products are never deleted by a single click.
+- Admin products table gained a Status column, an Active/Archived/All filter, archived row styling, and context-dependent actions: active rows offer Edit and Archive; archived rows offer Restore and Delete permanently.
+- An archived product's `?product=` URL now renders a **"No longer available"** page naming the product and linking back to the collection, instead of "Product not found". A bookmarked link or an old order reference no longer implies the product never existed.
+- This supersedes the previous single-click Delete behaviour. Deleting a product that has sales is no longer possible at all, so its order snapshots and analytics stay inspectable.
+
+### Verification — product archiving
+
+- Five new business-logic tests and two new DOM tests were written first and failed against the old code as expected, then passed after implementation. One test I wrote initially passed for the wrong reason: `/archive/i` matched both the new "archive first" message and the sales-guard message, so it did not actually prove the sales rule. It now pins `/appears in past orders/`.
+- **Mutation checks**: removing the sales guard fails exactly 1 test; removing the two-step rule fails exactly 2. Restored, all pass. This caught a genuinely hollow assertion before it shipped.
+- Two implementation bugs were found and fixed during the work: archiving removed saved items but not bag items (`reconcileCart` did not exclude archived products), and my first design did not enforce the approved archive-before-delete ordering.
+- `npm test` passed **25/25** (21 business-logic, 4 DOM) and `npm run test:e2e` passed **39/39** in Chromium 153. Two existing e2e tests that clicked a single click Delete were updated to the archive flow: the storefront one now archives and then deletes through the Archived filter, and the product-page one archives and expects "No longer available" instead of "Product not found".
+
 ### Added — continuous integration (prepared, not active)
 
 - Prepared a CI workflow at [`ci/tests.yml`](ci/tests.yml): on every pull request and push to `main` it runs `npm ci`, `npm test`, `npx playwright install --with-deps chromium`, then `npm run test:e2e`, uploading `playwright-report/` and `test-results/` only when a step fails. GitHub-hosted `ubuntu-latest`, Node 22, npm caching, 15-minute timeout, read-only `contents` permission, actions pinned at `v7`.

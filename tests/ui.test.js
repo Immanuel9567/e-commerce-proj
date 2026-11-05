@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -131,6 +131,64 @@ test('built-in products still expose reloadable detail links', () => {
     assert.ok(links.every(href => /^\?product=aura-\d{2}$/.test(href)), `unexpected hrefs: ${links.join(', ')}`);
     assert.ok(links.includes('?product=aura-01'));
     assert.ok(links.includes('?product=aura-14'));
+  } finally {
+    page.close();
+  }
+});
+
+test('admin lists archived products separately and only offers legal actions', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    const rowFor = title => Array.from(document.querySelectorAll('#adminProductBody tr')).find(row => row.textContent.includes(title));
+
+    window.renderAdminProducts();
+    // Active filter is the default: archived products are hidden from it.
+    assert.match(document.getElementById('adminProductBody').textContent, /AURA ANC Over-Ear/);
+    assert.equal(document.querySelectorAll('[data-product-filter="active"].active').length, 1);
+    assert.ok(document.querySelector('[data-admin-action="archive-product"]'), 'active rows offer Archive');
+    assert.equal(document.querySelector('[data-admin-action="delete-product"]'), null, 'active rows must not offer permanent delete');
+
+    store.archiveProduct('aura-01');
+    window.renderAdminProducts();
+    assert.equal(rowFor('AURA ANC Over-Ear'), undefined, 'archived is hidden under the Active filter');
+
+    document.querySelector('[data-product-filter="archived"]').click();
+    assert.match(document.getElementById('adminProductBody').textContent, /AURA ANC Over-Ear/);
+    assert.match(document.getElementById('adminProductBody').textContent, /Archived/);
+    assert.ok(document.querySelector('[data-admin-action="restore-product"]'), 'archived rows offer Restore');
+    assert.ok(document.querySelector('[data-admin-action="delete-product"]'), 'archived rows offer permanent delete');
+    assert.equal(document.querySelector('[data-admin-action="archive-product"]'), null);
+
+    document.querySelector('[data-product-filter="all"]').click();
+    assert.equal(document.querySelectorAll('#adminProductBody tr').length, 14, 'all shows every product');
+  } finally {
+    page.close();
+  }
+});
+
+test('an archived product leaves the storefront and shows a retired detail page', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    // aura-01 is the featured hero product, so this exercises the fallback too.
+    store.archiveProduct('aura-01');
+
+    const ids = window.getFilteredProducts().map(product => product.id);
+    assert.equal(ids.includes('aura-01'), false, 'archived product is not in the catalogue');
+    assert.equal(ids.length, 13);
+
+    window.renderProductPage('aura-01');
+    const text = document.getElementById('productPageContent').textContent;
+    assert.match(text, /No longer available/);
+    assert.match(text, /AURA ANC Over-Ear/);
+    assert.doesNotMatch(text, /Product not found/, 'a retired item is not the same as a missing one');
+
+    // Restoring puts it back.
+    store.restoreProduct('aura-01');
+    assert.equal(window.getFilteredProducts().map(product => product.id).includes('aura-01'), true);
   } finally {
     page.close();
   }
