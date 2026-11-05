@@ -1,5 +1,7 @@
 # Continuous integration
 
+> **Action needed from a maintainer:** this workflow is ready but switched off. You can enable it in about a minute from the GitHub website — see [Activating it](#activating-it). No local setup, token or command line is required.
+
 `tests.yml` in this directory is ready to use, but it is **not active**. GitHub only runs workflows from `.github/workflows/`, and the GitHub App connection used to push this repository is not permitted to create or update workflow files:
 
 ```
@@ -11,12 +13,29 @@ Until that permission is granted, checks are run locally before opening a pull r
 
 ## Activating it
 
-Either of these works:
+**Easiest, works in the browser with no setup:**
 
-1. **Move the file in the GitHub web UI.** Create `.github/workflows/tests.yml` through the repo's "Add file" editor and paste in the contents of `ci/tests.yml`. Commits made in the browser are not subject to the App's workflow restriction.
-2. **Push with a credentialed human account or token that has the `workflow` scope**, for example `gh auth login` locally, then `git mv ci/tests.yml .github/workflows/tests.yml` and push.
+1. Open [`ci/tests.yml`](tests.yml) in this repository on GitHub and press **Copy raw file** (or select all and copy).
+2. In the repository, choose **Add file → Create new file**.
+3. Type `.github/workflows/tests.yml` as the filename (the slashes create the folders).
+4. Paste the contents and commit straight to `main`, or open a pull request with it.
 
-After the file is on the default branch, it runs on every pull request and on pushes to `main`. Keep `ci/tests.yml` in sync if the steps change, or delete it once the real workflow is live.
+Commits made in the browser are not subject to the App restriction that blocked the automated push. The workflow then runs on every pull request and on pushes to `main`.
+
+**Alternative, from a terminal with your own GitHub account:**
+
+```sh
+git clone https://github.com/Immanuel9567/e-commerce-proj
+cd e-commerce-proj
+mkdir -p .github/workflows
+git mv ci/tests.yml .github/workflows/tests.yml
+git commit -m "Activate CI workflow"
+git push
+```
+
+A personal token or `gh auth login` session with the `workflow` scope is required.
+
+Once `.github/workflows/tests.yml` exists on `main`, delete this note and `ci/tests.yml` so there is only one copy to maintain.
 
 ## What it runs
 
