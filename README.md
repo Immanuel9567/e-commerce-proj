@@ -38,6 +38,14 @@ npm run test:e2e
 
 The end-to-end tests start a local static server automatically. `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` can be set to use an existing Chromium binary.
 
+When Playwright's own browser download is blocked but Node packages are reachable, a sandbox can still run the suite with a Chromium build plus its shared libraries shipped on npm: `@sparticuz/chromium` (not a project dependency). Decompress `bin/chromium.br` to an executable and `bin/al2023.tar.br` to a directory, then run:
+
+```sh
+LD_LIBRARY_PATH=/path/to/al2023/lib PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium npm run test:e2e
+```
+
+This was verified with Chromium 153 in a Debian 12 sandbox; it does not replace a normal Playwright browser install for day-to-day use.
+
 `npm test` runs two suites and needs no browser:
 
 - `tests/store.test.js` — business logic (stock, promotions, checkout, order status flow, refunds).

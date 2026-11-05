@@ -4,6 +4,17 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Documentation — Playwright made runnable in the sandbox
+
+- Documented how to run `npm run test:e2e` when Playwright's browser download is blocked: use the Chromium build and shared libraries shipped inside the `@sparticuz/chromium` npm package and point `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `LD_LIBRARY_PATH` at them. Verified with Chromium 153 on Debian 12. `@sparticuz/chromium` is **not** a project dependency; it was decompressed outside the repository.
+- This closes the earlier "browser suite cannot run here" caveat for future changes in an equivalent sandbox; normal development should still use `npx playwright install chromium`.
+
+### Verification — first full browser run
+
+- **`npm run test:e2e` executed for the first time in this session: 36 passed, 1 failed (37 total, 49.3 s).** This supersedes the standing "Playwright not run" note in the entries above for the behavior those tests cover.
+- The single failure is the pre-existing fallback test, not new work: `tests/e2e/product-page.spec.js:249` broke `aura-05`'s image URL and expected the SVG category fallback on the detail page. It now receives `assets/images/prod_frenchpress.jpg`, because `aura-05` no longer points at a remote URL, so breaking its image is no longer possible by simply being offline. The test needs to force an actual load failure; it is left failing and unfixed so it is not silently weakened.
+- All 14 built-in product detail pages, the checkout/status journey (including the new `pending → processing → shipped` steps), inventory, promotions, mobile navigation, theme, tap-highlight and keyboard tests passed in real Chromium.
+
 ### Changed — all product images are local
 
 - Replaced the 8 product images that hotlinked `images.unsplash.com` with locally generated assets in `assets/images/`: `prod_frenchpress.jpg`, `prod_keyboard.jpg`, `prod_desklamp.jpg`, `prod_fieldwatch.jpg`, `prod_runner.jpg`, `prod_charger.jpg`, `prod_iem.jpg` and `prod_flask.jpg`. All 14 built-in products now load from this repository, so the storefront no longer depends on a third-party image host or its availability, and the README's local-images claim is now accurate.
