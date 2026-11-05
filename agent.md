@@ -52,8 +52,9 @@ Do not end a completed step by guessing what comes next, and do not chain into f
 1. Finish the current step, verify it, and update [CHANGELOG.md](CHANGELOG.md) and the roadmap progress log.
 2. Then ask the owner a short questionnaire with `ask_user` covering, at minimum: **what to do next** (with concrete options drawn from the remaining known work), **how much scope** to take on, and any **decision the next step depends on** (for example approval to start a roadmap phase, deploy, or change a guardrail).
 3. In the accompanying message, state what was just completed, what was verified, what was not run, and which risks or open decisions remain — so the choice is informed.
-4. Do not start the next step in the same turn as the questionnaire. Wait for the answer. If the questionnaire is skipped or unanswered, stop and wait rather than choosing for the owner.
-5. Options must be real, permitted work: never offer to skip an approval gate, run a destructive operation, or apply remote migrations without the owner's explicit approval.
+4. Mark a recommendation on every question: put **Recommended** at the start of the option label you recommend and explain the reasoning in that option's description and in the message. Recommend exactly one option per question, and base it on the known state of the repository, risk, cost and the roadmap — not on convenience. If you genuinely have no basis, say so instead of inventing a preference.
+5. Do not start the next step in the same turn as the questionnaire. Wait for the answer. If the questionnaire is skipped or unanswered, stop and wait rather than choosing for the owner.
+6. Options must be real, permitted work: never offer to skip an approval gate, run a destructive operation, or apply remote migrations without the owner's explicit approval.
 
 ## Changelog: mandatory on every substantive change
 

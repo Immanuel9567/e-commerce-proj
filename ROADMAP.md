@@ -18,6 +18,7 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-10-30 | Dedicated reloadable product detail pages; simplified hero; checkout-inverse variant colors | `js/app.js`, `js/products.js` | Done |
 | 2026-10-30 | Mobile bottom navigation pill, tap-highlight suppression, theme gradient notices | `css/style.css`, `js/app.js` | Done |
 | 2026-11-05 | Percentage discounts round half up at the cent level; order status flow and refund eligibility enforced in the store and mirrored in the admin UI; jsdom DOM tests added to `npm test` | `js/store.js`, `js/app.js`, `tests/` | Done — not deployed; Playwright suite not run |
+| 2026-11-05 | Working rules added: a roadmap progress log after every step, and a per-step check-in questionnaire that must mark a recommended option | `agent.md`, `AGENTS.md`, `ROADMAP.md` | Done — docs only |
 
 Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
 

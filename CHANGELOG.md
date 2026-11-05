@@ -4,6 +4,11 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Documentation — questionnaire recommendations
+
+- The mandatory per-step questionnaire in [agent.md](agent.md) and [AGENTS.md](AGENTS.md) must now mark a **Recommended** option on every question, with the reasoning in the option description and the message. Exactly one recommendation per question, based on repository state, risk, cost and the roadmap; the instruction to say so plainly when there is no basis is included so guidance is not invented.
+- Documentation-only change: no application behavior, data or deployment changed.
+
 ### Documentation — workflow rules and roadmap progress log
 
 - Added a **Progress log** table to [ROADMAP.md](ROADMAP.md) that records completed work separately from the phase checklists, back-filled with the storefront, product-page and mobile-UI work already on `main` plus the 2026-11-05 discount and order-status step. Finishing logged work still does **not** tick a phase box; all phases 0–6 remain **not started**.
