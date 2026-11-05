@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -162,7 +162,10 @@ test('admin lists archived products separately and only offers legal actions', (
     assert.equal(document.querySelector('[data-admin-action="archive-product"]'), null);
 
     document.querySelector('[data-product-filter="all"]').click();
-    assert.equal(document.querySelectorAll('#adminProductBody tr').length, 14, 'all shows every product');
+    // "All" is paged: page one shows the first 10 of 14, and the pager says so.
+    assert.equal(document.querySelectorAll('#adminProductBody tr').length, 10, 'first page holds one page of rows');
+    assert.match(document.getElementById('adminProductPager').textContent, /Showing 1.10 of 14 products/);
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 1 of 2/);
   } finally {
     page.close();
   }
@@ -189,6 +192,104 @@ test('an archived product leaves the storefront and shows a retired detail page'
     // Restoring puts it back.
     store.restoreProduct('aura-01');
     assert.equal(window.getFilteredProducts().map(product => product.id).includes('aura-01'), true);
+  } finally {
+    page.close();
+  }
+});
+
+test('admin product search narrows results and resets to the first page', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    window.renderAdminProducts();
+    // Walk to page two, then search: the search must come back to page one.
+    document.querySelector('[data-page-target="products"][data-page-delta="1"]').click();
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 2 of 2/);
+    const search = document.getElementById('adminProductSearch');
+    search.value = 'aura';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 1 of 1/);
+    const titles = [...document.querySelectorAll('#adminProductBody tr td[data-label="Product"] strong')].map(node => node.textContent);
+    assert.ok(titles.length > 0, 'search returns matches');
+    assert.ok(titles.every(title => /aura/i.test(title)), `unexpected matches: ${titles.join(', ')}`);
+
+    // A query with no matches shows the message, not an empty table.
+    search.value = 'zzzz';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.match(document.getElementById('adminProductBody').textContent, /No products match/);
+    assert.equal(document.getElementById('adminProductPager').hidden, true);
+  } finally {
+    page.close();
+  }
+});
+
+test('admin order filters and paging work on a list long enough to page', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    // 23 orders: enough for three pages. Raise stock so the loop is not bounded
+    // by the seed quantity.
+    store.updateStock('aura-01', 100);
+    for (let index = 0; index < 23; index++) {
+      store.addToCart('aura-01');
+      const order = store.placeOrder({ name: `Buyer ${index}`, address: `${index} Main St`, city: 'Ibadan', email: `buyer${index}@example.com`, paymentMethod: 'Apple Pay' });
+      if (index % 5 === 0) { store.updateOrderStatus(order.reference, 'processing'); }
+    }
+    window.renderAdminOrders();
+    assert.match(document.getElementById('adminOrderPager').textContent, /Showing 1.10 of 23 orders/);
+    assert.match(document.getElementById('adminOrderPager').textContent, /Page 1 of 3/);
+    document.querySelector('[data-page-target="orders"][data-page-delta="1"]').click();
+    assert.match(document.getElementById('adminOrderPager').textContent, /Showing 11.20 of 23 orders/);
+    document.querySelector('[data-page-target="orders"][data-page-delta="1"]').click();
+    assert.match(document.getElementById('adminOrderPager').textContent, /Showing 21.23 of 23 orders/);
+    assert.equal(document.querySelector('[data-page-target="orders"][data-page-delta="1"]').disabled, true, 'Next is disabled on the last page');
+
+    // Status filter narrows the list and returns to page one.
+    document.querySelector('[data-order-filter="processing"]').click();
+    assert.match(document.getElementById('adminOrderPager').textContent, /of 5 orders/);
+    assert.match(document.getElementById('adminOrderPager').textContent, /Page 1 of 1/);
+    assert.equal(document.querySelectorAll('#adminOrderBody tr').length, 5);
+
+    // Filters compose, so clear the status filter before searching across all orders.
+    document.querySelector('[data-order-filter="all"]').click();
+    const search = document.getElementById('adminOrderSearch');
+    search.value = 'buyer7@example.com';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.match(document.getElementById('adminOrderPager').textContent, /of 1 order/);
+    assert.match(document.getElementById('adminOrderBody').textContent, /Buyer 7/);
+  } finally {
+    page.close();
+  }
+});
+
+test('admin inventory filters by stock level and keeps the summary accurate', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    store.updateStock('aura-01', 0);   // out of stock
+    store.updateStock('aura-02', 2);   // low stock
+    store.updateStock('aura-03', 40);  // healthy
+    window.renderAdminInventory();
+
+    document.querySelector('[data-inventory-filter="out"]').click();
+    let rows = [...document.querySelectorAll('#adminInventoryBody tr')].map(row => row.textContent).join(' ');
+    assert.match(rows, /AURA ANC Over-Ear/);
+    assert.doesNotMatch(rows, /Bauhaus Chronograph Mono/);
+
+    document.querySelector('[data-inventory-filter="low"]').click();
+    rows = [...document.querySelectorAll('#adminInventoryBody tr')].map(row => row.textContent).join(' ');
+    assert.match(rows, /Bauhaus Chronograph Mono/);
+    assert.doesNotMatch(rows, /AURA ANC Over-Ear/, 'out of stock is not counted as merely low');
+
+    document.querySelector('[data-inventory-filter="all"]').click();
+    const search = document.getElementById('adminInventorySearch');
+    search.value = 'chronograph';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    rows = [...document.querySelectorAll('#adminInventoryBody tr')].map(row => row.textContent).join(' ');
+    assert.match(rows, /Bauhaus Chronograph Mono/);
+    assert.doesNotMatch(rows, /CloudPure Seamless Runner/);
   } finally {
     page.close();
   }

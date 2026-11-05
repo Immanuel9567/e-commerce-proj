@@ -24,6 +24,26 @@ const ORDER_STATUS_FLOW = {
 const nextOrderStatusesFor = status => [...(ORDER_STATUS_FLOW[status] || [])];
 const refundableStatuses = ['shipped', 'delivered'];
 
+// Admin list helpers. The demo has no server, so paging happens here; the shape
+// (page, pageCount, total) is what a real server-side implementation returns.
+const ADMIN_PAGE_SIZE = 10;
+
+function paginate(items, page = 1, pageSize = ADMIN_PAGE_SIZE) {
+  const list = Array.isArray(items) ? items : [];
+  const size = Math.max(1, Math.floor(Number(pageSize)) || ADMIN_PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(list.length / size));
+  const requested = Math.floor(Number(page)) || 1;
+  const current = Math.min(pageCount, Math.max(1, requested));
+  const start = (current - 1) * size;
+  return { page: current, pageCount, pageSize: size, total: list.length, start, items: list.slice(start, start + size) };
+}
+
+function matchesQuery(query, ...values) {
+  const needle = String(query == null ? '' : query).trim().toLowerCase();
+  if (!needle) return true;
+  return values.some(value => String(value == null ? '' : value).toLowerCase().includes(needle));
+}
+
 class Store {
   constructor(seedProducts, storage, now = () => new Date()) {
     this.storage = storage;
@@ -444,4 +464,4 @@ class Store {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { Store, STORE_STATE_KEY, STORE_CATEGORIES, ORDER_STATUS_FLOW, nextOrderStatusesFor, refundableStatuses };
+if (typeof module !== 'undefined' && module.exports) module.exports = { Store, STORE_STATE_KEY, STORE_CATEGORIES, ORDER_STATUS_FLOW, nextOrderStatusesFor, refundableStatuses, paginate, matchesQuery, ADMIN_PAGE_SIZE };

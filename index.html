@@ -224,23 +224,49 @@
               <button type="submit" class="nm-btn-black">Save product</button>
             </form>
           </div>
+          <div class="admin-list-toolbar">
+            <label class="admin-search"><span class="visually-hidden">Search products</span><input type="search" id="adminProductSearch" placeholder="Search products" autocomplete="off"></label>
+          </div>
           <nav class="admin-filter-pills" id="adminProductFilter" aria-label="Filter products by status">
             <button type="button" class="admin-filter-pill active" data-product-filter="active" aria-pressed="true">Active</button>
             <button type="button" class="admin-filter-pill" data-product-filter="archived" aria-pressed="false">Archived</button>
             <button type="button" class="admin-filter-pill" data-product-filter="all" aria-pressed="false">All</button>
           </nav>
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminProductBody"></tbody></table></div>
+          <div class="admin-pager" id="adminProductPager"></div>
         </section>
         <section class="admin-panel" id="admin-orders" hidden>
           <div class="admin-panel-header"><div><div class="section-kicker">FULFILMENT</div><h3>Orders</h3><p>Review and update customer orders.</p></div></div>
+          <div class="admin-list-toolbar">
+            <label class="admin-search"><span class="visually-hidden">Search orders</span><input type="search" id="adminOrderSearch" placeholder="Search reference, customer or email" autocomplete="off"></label>
+          </div>
+          <nav class="admin-filter-pills" id="adminOrderFilter" aria-label="Filter orders by status">
+            <button type="button" class="admin-filter-pill active" data-order-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="pending" aria-pressed="false">Pending</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="processing" aria-pressed="false">Processing</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="shipped" aria-pressed="false">Shipped</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="delivered" aria-pressed="false">Delivered</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="cancelled" aria-pressed="false">Cancelled</button>
+            <button type="button" class="admin-filter-pill" data-order-filter="refunded" aria-pressed="false">Refunded</button>
+          </nav>
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Reference</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminOrderBody"></tbody></table></div>
+          <div class="admin-pager" id="adminOrderPager"></div>
           <div id="orderDetails" class="customer-history" hidden></div>
           <p class="admin-disclosure">Refunds are recorded locally; no payment is returned.</p>
         </section>
         <section class="admin-panel" id="admin-inventory" hidden>
           <div class="admin-panel-header"><div><div class="section-kicker">STOCK CONTROL</div><h3>Inventory</h3><p>Keep an eye on what is available.</p></div></div>
           <div class="inventory-summary" id="inventorySummary"></div>
+          <div class="admin-list-toolbar">
+            <label class="admin-search"><span class="visually-hidden">Search inventory</span><input type="search" id="adminInventorySearch" placeholder="Search products" autocomplete="off"></label>
+          </div>
+          <nav class="admin-filter-pills" id="adminInventoryFilter" aria-label="Filter inventory by stock level">
+            <button type="button" class="admin-filter-pill active" data-inventory-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="admin-filter-pill" data-inventory-filter="low" aria-pressed="false">Needs attention</button>
+            <button type="button" class="admin-filter-pill" data-inventory-filter="out" aria-pressed="false">Out of stock</button>
+          </nav>
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Stock quantity</th><th>Status</th><th>Update</th></tr></thead><tbody id="adminInventoryBody"></tbody></table></div>
+          <div class="admin-pager" id="adminInventoryPager"></div>
         </section>
         <section class="admin-panel" id="admin-customers" hidden>
           <div class="admin-panel-header"><div><div class="section-kicker">PEOPLE</div><h3>Customers</h3><p>Profiles and order history from this device.</p></div></div>

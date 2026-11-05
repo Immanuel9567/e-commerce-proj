@@ -331,3 +331,40 @@ test('archived products are excluded from low stock but active ones are counted'
   store.archiveProduct('one');
   assert.equal(store.getAnalytics().lowStock, 1, 'archived stock no longer needs reordering');
 });
+
+test('admin list paging walks pages and clamps out-of-range requests', () => {
+  const { paginate } = require('../js/store.js');
+  const items = Array.from({ length: 25 }, (_, index) => ({ id: index + 1 }));
+  const first = paginate(items, 1, 10);
+  assert.equal(first.page, 1);
+  assert.equal(first.pageCount, 3);
+  assert.equal(first.total, 25);
+  assert.deepEqual(first.items.map(item => item.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(paginate(items, 3, 10).items.map(item => item.id), [21, 22, 23, 24, 25]);
+  // Asking beyond the end returns the last page, not an empty table.
+  assert.equal(paginate(items, 99, 10).page, 3);
+  assert.equal(paginate(items, 0, 10).page, 1);
+  assert.equal(paginate(items, -5, 10).page, 1);
+  // An empty list still reports one page so the controls do not divide by zero.
+  const empty = paginate([], 4, 10);
+  assert.equal(empty.page, 1);
+  assert.equal(empty.pageCount, 1);
+  assert.deepEqual(empty.items, []);
+  // A page size larger than the list is allowed.
+  assert.equal(paginate(items, 1, 100).pageCount, 1);
+});
+
+test('admin list search matches the fields an operator would type', () => {
+  const { matchesQuery } = require('../js/store.js');
+  // matchesQuery(query, ...searchableValues)
+  assert.equal(matchesQuery('aura', 'AURA ANC Over-Ear'), true, 'search is case-insensitive');
+  assert.equal(matchesQuery('ANC', 'AURA ANC Over-Ear'), true);
+  assert.equal(matchesQuery('  over-ear  ', 'AURA ANC Over-Ear'), true, 'surrounding spaces are ignored');
+  assert.equal(matchesQuery('watch', 'AURA ANC Over-Ear'), false);
+  assert.equal(matchesQuery('', 'AURA ANC Over-Ear'), true, 'an empty query matches everything');
+  assert.equal(matchesQuery('   ', 'AURA ANC Over-Ear'), true);
+  assert.equal(matchesQuery('x', null), false);
+  // Extra searchable values (email, status, category) are matched too.
+  assert.equal(matchesQuery('ada@example.com', 'Ada Customer', 'ada@example.com'), true);
+  assert.equal(matchesQuery('delivered', 'REF-1', 'Delivered'), true);
+});

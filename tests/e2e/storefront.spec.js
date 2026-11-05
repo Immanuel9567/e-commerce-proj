@@ -157,6 +157,8 @@ test('admin products, low stock and scheduled promotions work in the storefront'
   await page.locator('#productTags').fill('Desk, New');
   await page.locator('#productDescription').fill('A small desk lamp.');
   await page.locator('#adminProductForm button[type="submit"]').click();
+  // The products table is paged now, so locate the new row through search.
+  await page.locator('#adminProductSearch').fill('Desk lamp');
   const row = page.locator('#adminProductBody tr').filter({ hasText: 'Desk lamp <special>' });
   await expect(row).toBeVisible();
   await expect(row.locator('special')).toHaveCount(0);
@@ -165,6 +167,8 @@ test('admin products, low stock and scheduled promotions work in the storefront'
   await page.locator('#adminProductForm button[type="submit"]').click();
   await expect(row).toContainText('$85.00');
   await page.locator('[data-admin="inventory"]').click();
+  // Inventory is paged too, so narrow it down before asserting on the row.
+  await page.locator('#adminInventorySearch').fill('Desk lamp');
   const inventoryRow = page.locator('#adminInventoryBody tr').filter({ hasText: 'Desk lamp <special>' });
   await expect(inventoryRow).toContainText('Low stock');
   await page.locator('[data-admin="discounts"]').click();
@@ -190,6 +194,7 @@ test('admin products, low stock and scheduled promotions work in the storefront'
   await page.locator('#cartCloseBtn').click();
   await page.locator('[data-tab="admin"]').click();
   await page.locator('[data-admin="products"]').click();
+  await page.locator('#adminProductSearch').fill('Desk lamp');
   const lampRow = page.locator('#adminProductBody tr').filter({ hasText: 'Desk lamp <special>' });
   await lampRow.getByRole('button', { name: 'Archive' }).click();
   await page.locator('#confirmAccept').click();
@@ -366,3 +371,57 @@ for (const [layout, width, height] of [['desktop', 1280, 800], ['mobile', 390, 8
     await expect.poll(() => notice.evaluate(element => Number(getComputedStyle(element).opacity))).toBeLessThan(0.05);
   });
 }
+
+test('admin search, status filters and paging work in a real browser', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="products"]').click();
+
+  // Products: 14 active products page 10 at a time.
+  await page.locator('[data-product-filter="all"]').click();
+  await expect(page.locator('#adminProductPager')).toContainText('Showing 1–10 of 14 products');
+  await expect(page.locator('#adminProductPager')).toContainText('Page 1 of 2');
+  await page.locator('[data-page-target="products"][data-page-delta="1"]').click();
+  await expect(page.locator('#adminProductPager')).toContainText('Showing 11–14 of 14 products');
+  await expect(page.locator('[data-page-target="products"][data-page-delta="1"]')).toBeDisabled();
+
+  // Search returns to page one and narrows the rows.
+  await page.locator('#adminProductSearch').fill('flask');
+  await expect(page.locator('#adminProductPager')).toContainText('Page 1 of 1');
+  await expect(page.locator('#adminProductBody tr')).toHaveCount(1);
+  await expect(page.locator('#adminProductBody')).toContainText('Minimalist Matte Thermal Flask');
+
+  // A query with no matches states so rather than showing an empty table.
+  await page.locator('#adminProductSearch').fill('zzzz');
+  await expect(page.locator('#adminProductBody')).toContainText('No products match');
+  await page.locator('#adminProductSearch').fill('');
+  await page.locator('[data-product-filter="active"]').click();
+
+  // Inventory: search and stock filters.
+  await page.locator('[data-admin="inventory"]').click();
+  await page.locator('#adminInventorySearch').fill('chronograph');
+  await expect(page.locator('#adminInventoryBody tr')).toHaveCount(1);
+  await expect(page.locator('#adminInventoryBody')).toContainText('Bauhaus Chronograph Mono');
+  await page.locator('#adminInventorySearch').fill('');
+  // Seed stock is all >= 5, so the low filter starts empty. Create a real
+  // low-stock item first, otherwise this would assert against the "everything
+  // is above the threshold" placeholder row and pass for the wrong reason.
+  await page.locator('[data-inventory-filter="all"]').click();
+  const auraRow = page.locator('#adminInventoryBody tr').filter({ hasText: 'AURA ANC Over-Ear' });
+  await auraRow.locator('input').fill('2');
+  await auraRow.getByRole('button', { name: 'Save stock' }).click();
+  await page.locator('[data-inventory-filter="low"]').click();
+  await expect(page.locator('#adminInventoryBody')).toContainText('AURA ANC Over-Ear');
+  await expect(page.locator('#adminInventoryBody')).not.toContainText('above the low-stock threshold');
+  await page.locator('[data-inventory-filter="out"]').click();
+  await expect(page.locator('#adminInventoryBody')).toContainText('Nothing is out of stock');
+  await page.locator('[data-inventory-filter="all"]').click();
+  await auraRow.locator('input').fill('18');
+  await auraRow.getByRole('button', { name: 'Save stock' }).click();
+
+  // Orders: an empty list still renders a usable pager.
+  await page.locator('[data-admin="orders"]').click();
+  // With no orders the table's own empty message stands alone: no pager, no dead arrows.
+  await expect(page.locator('#adminOrderPager')).toBeHidden();
+});

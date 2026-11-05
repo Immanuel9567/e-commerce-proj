@@ -4,6 +4,24 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — admin search, filters and paging
+
+- The Products, Inventory and Orders admin tables can now be **searched, filtered and paged** instead of rendering every row at once. Customers and Promotions are unchanged.
+- `js/store.js` gained two exported pure helpers: `paginate(items, page, pageSize)` returns `{ page, pageCount, pageSize, total, start, items }` and clamps out-of-range or non-numeric pages (page `99` of 25 items lands on the last page, `0` and `-5` land on the first, an empty list still reports one page); `matchesQuery(query, ...values)` matches case-insensitively on trimmed input and treats an empty query as "match everything". `ADMIN_PAGE_SIZE` is 10.
+- Paging is deliberately **client-side but server-shaped**: a backend can later return the same object from a real endpoint without the renderers changing. True server-side pagination still needs the Phase 1–2 APIs, and the roadmap records that.
+- Each list remembers its own query and page (`adminListState`), search and filter changes reset to page one, and a shared `renderPager()` draws "Showing 11–14 of 14 products · Page 2 of 2" with disabled arrows at the ends. Empty results say why: no products match the query, no orders with this status, nothing is out of stock, or everything is above the low-stock threshold.
+- When a list is empty the pager is **hidden** rather than showing a second "nothing to show" line with dead arrows; the table’s own contextual message is the single thing to read.
+- Orders gained status filter pills (all plus the six statuses) and inventory gained stock-level filters (all, needs attention, out of stock).
+- Product ids are deliberately **not** searchable: every seed id starts with `aura-`, so including them made an id query match all 14 products.
+
+### Verification — admin search, filters and paging
+
+- `npm test`: **30/30** — 20 store tests and 10 jsdom DOM tests. New coverage: paging arithmetic and clamping, search across the fields an operator would type, product search resetting to page one, and order paging/filtering/search over a 23-order list.
+- Playwright: **40/40** in Chromium 153, including a new browser test that pages the product table, searches it, filters inventory and checks an empty order list still renders a usable pager.
+- `npm run test:mutation`: **14/14 caught** after adding four paging/search mutations (unclamped page, untruncated last page, whitespace-sensitive search, case-sensitive search). Each is killed by a named test.
+- Two existing browser tests were updated, not weakened: they added a product and asserted its row was visible, which paging correctly moved to page two. They now locate the row through the search box — the same path an operator would use.
+- One new assertion was found to be **hollow and was tightened**: the low-stock filter check counted rows, but the "everything is above the threshold" placeholder is itself a table row, so it passed when the filter returned nothing. The test now lowers AURA’s stock to 2, confirms it appears under **Low stock**, confirms the placeholder is gone, checks the out-of-stock message, then restores stock to 18.
+
 ### Added — repeatable mutation checks (restored)
 
 - Added `npm run test:mutation` (`tests/mutation-check.js`): it breaks one guarded rule at a time in `js/store.js`, runs `npm test`, and reports whether the suite notices. Files are restored from the in-memory original in a `finally` block, and the script refuses to start if the baseline suite is already failing. A mutation that leaves every test green is reported as **SURVIVED**, because that behaviour is not genuinely covered.
