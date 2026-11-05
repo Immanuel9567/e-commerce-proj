@@ -4,6 +4,19 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — repeatable mutation checks (restored)
+
+- Added `npm run test:mutation` (`tests/mutation-check.js`): it breaks one guarded rule at a time in `js/store.js`, runs `npm test`, and reports whether the suite notices. Files are restored from the in-memory original in a `finally` block, and the script refuses to start if the baseline suite is already failing. A mutation that leaves every test green is reported as **SURVIVED**, because that behaviour is not genuinely covered.
+- **Result: 10/10 mutations caught**, naming the specific failing test for each: dollar-level discount rounding, uncapped fixed discounts, missing status flow, cancellation without restock, early refunds, archived products leaking into the storefront, deleting products with past orders, archived products left in the bag, archived products counted in low stock, and unbounded bag quantities. The tree was verified unmodified afterwards and `npm test` still passed 25/25.
+- This was previously written but never reached `main` — the branch holding it was reset before merging, so it is re-created here. It exists because a test in the archiving step initially passed for the wrong reason: `/archive/i` matched two different error messages, so removing the sales guard left the suite green.
+
+### Documentation — CI handoff and production verification record
+
+- CI activation is now a **handoff task for a maintainer**, because the automated connection cannot write workflow files and the owner is not in a position to do it. Added a short "action needed" note at the top of [`ci/README.md`](ci/README.md), a maintainer-task callout in the [README](README.md), and explicit click-by-click browser steps plus a terminal alternative (both requiring no local setup in the browser case). `ci/tests.yml` is already committed and present on `main`.
+- Recorded the production verification that was performed but not previously logged: the live site at https://e-commerce-proj-umber.vercel.app/ serves the archiving implementation (`archiveProduct`, `restoreProduct`, `availableProducts`, `productHasSales`, and both deletion guards), the cent-level `promotionDiscount`, `ORDER_STATUS_FLOW` with restock-on-cancel and refund eligibility, 14 products with local images only, and a working `?product=aura-01` detail page. This confirms the PR #6 merge **is** deployed, contrary to the earlier "not re-verified" note.
+- **Not verified live:** the Admin archive UI (filter pills, Archive/Restore buttons). Verifying it needs an authenticated interactive session, and the page-fetch tool used cannot click. The store logic those controls call is confirmed present.
+- No application code changed in this step; `npm test` still passes **25/25** and no test behavior was touched.
+
 ### Added — product archiving replaces plain deletion
 
 - Products can now be **archived** instead of deleted. Archiving stamps `archivedAt`, sets a derived `archived` flag, removes the product from the storefront grid, search, category counts, the featured hero, the inventory panel and the low-stock count, and removes it from bags and saved items. It stays in Admin under a new **Archived** filter and can be **restored** at any time with its stock, price and images intact.
