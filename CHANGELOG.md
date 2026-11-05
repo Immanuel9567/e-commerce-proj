@@ -2,6 +2,40 @@
 
 This file records meaningful repository changes and the checks that support them. See [agent.md](agent.md) for the required entry and handoff rules. Dates use the owner's local date; `Unreleased` means the work is not yet part of a named release.
 
+## Unreleased — 2026-11-05
+
+### Fixed — percentage discount rounding
+
+- Percentage promotions now round the discount **at the cent level, half up**, instead of rounding the dollar figure before dividing (`js/store.js`, `promotionDiscount`). The old formula mis-rounded exact half-cent ties and resolved every one of them downward: 15% of `$4.10` gave `$0.61` (mathematically `0.615`) and 5% of `$20.10` gave `$1.01` (mathematically `1.005`), while 20% of `$4.10` correctly gave `$0.82`. The same subtotal therefore rounded in opposite directions depending on the percentage.
+- Scope: in a full sweep of 13 common percentages across subtotals from `$0.01` to `$2,000.00`, **10,187 exact half-cent ties were rounded down** and 251,813 upward. There were **no** wrong answers outside exact ties, so ordinary prices the demo currently uses are unaffected; the fix changes results only where the true discount ends in half a cent. Receipts and analytics both read the same corrected value.
+
+### Changed — order status and refund rules
+
+- Order fulfilment now follows an explicit one-way flow in `js/store.js` (`ORDER_STATUS_FLOW`): `pending → processing → shipped → delivered`. Cancelling is allowed until delivery and is terminal; `refunded` is terminal. Illegal jumps, reversals, and edits to cancelled or refunded orders are rejected by the store, not only hidden in the UI. Previously any valid status string could be set from any state, so `pending → delivered` was a single dropdown change.
+- A refund can now only be recorded for a **shipped or delivered** order, which matches what "Record refund" implies. Refunding a `pending`, `processing` or `cancelled` order is rejected with a specific message. This changes existing behavior: the demo previously allowed refunding a pending order.
+- Cancelling an order now puts its items **back into local stock**, so cancellation no longer silently loses inventory. It runs once, because `cancelled` is terminal. Refunds deliberately do **not** restock, matching the documented limitation.
+- Admin orders render only the legal next statuses (`js/app.js`), show a status badge instead of a dead dropdown once an order is terminal, and show "Record refund" only for shipped or delivered orders. Rejected actions still surface an error toast.
+- `tests/e2e/storefront.spec.js` now walks `pending → processing → shipped` instead of jumping straight to shipped, so the existing checkout journey keeps testing the same end state under the new rule.
+
+### Added — DOM-level tests
+
+- Added `tests/ui.test.js` (jsdom) so `npm test` verifies rendered behavior without a browser: storefront rendering, admin status/refund controls, the discount displayed in the bag, and reloadable product links. `npm test` now runs `tests/store.test.js` **and** `tests/ui.test.js`.
+- Added 5 business-logic tests to `tests/store.test.js` covering cent rounding, the status flow, cancel-restock, and refund eligibility.
+
+### Verification
+
+- Tests were written first and failed against the original code for the expected reasons: `0.61 !== 0.62` (rounding) and `Missing expected exception` (illegal status jump). To confirm the new tests genuinely catch the defects, the fix was temporarily reverted and the suite re-run: **4 tests failed**; with the fix restored, `npm test` passed **17/17** (13 business-logic, 4 DOM).
+- Bug-driven changes to three of my own new tests were corrected during implementation, not worked around: `nextOrderStatuses` takes an order reference, a shipped-order refund message differed, and an expected total omitted the `$15` shipping charged below `$150`.
+- A scripted DOM journey against the served app (`python3 -m http.server`, port 8000) verified: the `?product=` detail route renders and hides the storefront; `pending → delivered` and `pending → shipped` are blocked while `pending → processing → shipped → delivered` succeeds; `processing → pending` is blocked; a pending refund is blocked, a cancelled refund is blocked, and a delivered refund succeeds and then blocks further status changes; admin shows 0 status dropdowns and 0 refund buttons once orders are terminal; and the bag shows **−$0.62 (AURA15)** for 15% of `$4.10`. No script errors were reported.
+- `node --check` passed on all changed scripts; `git diff --check` passed; `package.json` syntax validated.
+- **Not run:** the Playwright suite (30 tests). This sandbox cannot download Playwright's browser and Chromium's native libraries are unavailable, so `npm run test:e2e` must be run where Chromium is installed. One e2e test was updated for the new flow and is unverified here.
+
+### Known limitations
+
+- The refund rule and status flow are enforced in browser-local code. They document intended behavior but are **not** a security boundary; a real backend must enforce the same rules server-side (see [roadmap](ROADMAP.md) Phases 2–4).
+- Cancellation restocks local inventory; a refund leaves stock untouched and no money moves. Clearing browser storage still removes everything.
+- Existing saved orders keep their current status; an order already marked `refunded` stays terminal, and one marked `cancelled` can no longer be refunded.
+
 ## Unreleased — 2026-10-30
 
 ### Added and changed — product details and hero

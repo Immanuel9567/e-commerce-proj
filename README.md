@@ -36,6 +36,11 @@ npm run test:e2e
 
 The end-to-end tests start a local static server automatically. `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` can be set to use an existing Chromium binary.
 
+`npm test` runs two suites and needs no browser:
+
+- `tests/store.test.js` — business logic (stock, promotions, checkout, order status flow, refunds).
+- `tests/ui.test.js` — DOM smoke tests that load the real `index.html` in [jsdom](https://github.com/jsdom/jsdom) and check that products, admin order controls and the bag render correctly. jsdom does not apply layout or CSS, so use `npm run test:e2e` for visual and input behavior.
+
 ## Project documentation
 
 - [Roadmap](ROADMAP.md) and [mind map](MINDMAP.md) — proposed future work and approval gates. No roadmap implementation phase has started.
