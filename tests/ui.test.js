@@ -294,3 +294,96 @@ test('admin inventory filters by stock level and keeps the summary accurate', ()
     page.close();
   }
 });
+
+test('admin customer search and paging work on a long customer list', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    store.updateStock('aura-01', 100);
+    for (let index = 0; index < 12; index++) {
+      store.addToCart('aura-01');
+      store.placeOrder({ name: `Shopper ${index}`, address: `${index} Market Rd`, city: index % 2 ? 'Lagos' : 'Abuja', email: `shopper${index}@example.com`, paymentMethod: 'Card' });
+    }
+    window.renderAdminCustomers();
+
+    assert.match(document.getElementById('adminCustomerPager').textContent, /Showing 1.10 of 12 customers/);
+    assert.match(document.getElementById('adminCustomerPager').textContent, /Page 1 of 2/);
+    assert.equal(document.querySelectorAll('#adminCustomerBody tr').length, 10);
+
+    document.querySelector('[data-page-target="customers"][data-page-delta="1"]').click();
+    assert.match(document.getElementById('adminCustomerPager').textContent, /Showing 11.12 of 12 customers/);
+
+    // Search matches name, email and city, and resets to page one.
+    const search = document.getElementById('adminCustomerSearch');
+    search.value = 'shopper3@';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(document.querySelectorAll('#adminCustomerBody tr').length, 1);
+    assert.match(document.getElementById('adminCustomerBody').textContent, /Shopper 3/);
+    assert.match(document.getElementById('adminCustomerPager').textContent, /Page 1 of 1/);
+
+    // Name alone, with a space that the email cannot match, so this fails if
+    // name drops out of the searchable fields.
+    search.value = 'shopper 7';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(document.querySelectorAll('#adminCustomerBody tr').length, 1);
+    assert.match(document.getElementById('adminCustomerBody').textContent, /Shopper 7/);
+
+    // City is searchable too.
+    search.value = 'abuja';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.match(document.getElementById('adminCustomerBody').textContent, /Shopper 0/);
+
+    // A miss says so instead of leaving an empty table.
+    search.value = 'nobody-here';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.match(document.getElementById('adminCustomerBody').textContent, /No customers match/);
+    assert.equal(document.getElementById('adminCustomerPager').hidden, true, 'no pager when nothing matches');
+  } finally {
+    page.close();
+  }
+});
+
+test('admin promotion status filters and paging work together', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const store = window.AppStore;
+    const base = store.promotions.length;
+    // Enough promotions to fill more than one page, across several statuses.
+    for (let index = 0; index < 12; index++) {
+      store.addPromotion({ code: `BULK${index}`, type: 'percent', percent: 10 + index });
+    }
+    store.addPromotion({ code: 'OFFLINE', type: 'percent', percent: 15 });
+    window.renderAdminDiscounts();
+    const offline = store.promotions.find(promo => promo.code === 'OFFLINE');
+    store.togglePromotion('OFFLINE');
+    window.renderAdminDiscounts();
+
+    assert.match(document.getElementById('adminPromoPager').textContent, new RegExp(`of ${base + 13} promotions`));
+    assert.match(document.getElementById('adminPromoPager').textContent, /Page 1 of 2/);
+
+    // Filtering by status narrows the list and returns to page one.
+    document.querySelector('[data-promo-filter="disabled"]').click();
+    assert.equal(document.querySelector('[data-promo-filter="disabled"]').getAttribute('aria-pressed'), 'true');
+    assert.match(document.getElementById('adminPromoBody').textContent, /OFFLINE/);
+    assert.doesNotMatch(document.getElementById('adminPromoBody').textContent, /BULK1\b/);
+    assert.match(document.getElementById('adminPromoPager').textContent, /Page 1 of 1/);
+
+    // A status with nothing in it explains itself.
+    document.querySelector('[data-promo-filter="expired"]').click();
+    assert.match(document.getElementById('adminPromoBody').textContent, /No expired promotions/);
+    assert.equal(document.getElementById('adminPromoPager').hidden, true);
+
+    // Search on top of "all" matches the code.
+    document.querySelector('[data-promo-filter="all"]').click();
+    const search = document.getElementById('adminPromoSearch');
+    search.value = 'bulk7';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+    assert.equal(document.querySelectorAll('#adminPromoBody tr').length, 1);
+    assert.match(document.getElementById('adminPromoBody').textContent, /BULK7/);
+    assert.ok(offline);
+  } finally {
+    page.close();
+  }
+});

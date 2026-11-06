@@ -270,7 +270,11 @@
         </section>
         <section class="admin-panel" id="admin-customers" hidden>
           <div class="admin-panel-header"><div><div class="section-kicker">PEOPLE</div><h3>Customers</h3><p>Profiles and order history from this device.</p></div></div>
+          <div class="admin-list-toolbar">
+            <label class="admin-search"><span class="visually-hidden">Search customers</span><input type="search" id="adminCustomerSearch" placeholder="Search name, email or city" autocomplete="off"></label>
+          </div>
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Customer</th><th>Orders</th><th>Spent</th><th>Account status</th><th>History</th></tr></thead><tbody id="adminCustomerBody"></tbody></table></div>
+          <div class="admin-pager" id="adminCustomerPager"></div>
           <div id="customerHistory" class="customer-history" hidden></div>
         </section>
         <section class="admin-panel" id="admin-discounts" hidden>
@@ -289,7 +293,18 @@
               <button type="submit" class="nm-btn-black">Save promotion</button>
             </form>
           </div>
+          <div class="admin-list-toolbar">
+            <label class="admin-search"><span class="visually-hidden">Search promotions</span><input type="search" id="adminPromoSearch" placeholder="Search code or discount" autocomplete="off"></label>
+          </div>
+          <nav class="admin-filter-pills" id="adminPromoFilter" aria-label="Filter promotions by status">
+            <button type="button" class="admin-filter-pill active" data-promo-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="admin-filter-pill" data-promo-filter="active" aria-pressed="false">Active</button>
+            <button type="button" class="admin-filter-pill" data-promo-filter="scheduled" aria-pressed="false">Scheduled</button>
+            <button type="button" class="admin-filter-pill" data-promo-filter="expired" aria-pressed="false">Expired</button>
+            <button type="button" class="admin-filter-pill" data-promo-filter="disabled" aria-pressed="false">Disabled</button>
+          </nav>
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Code</th><th>Discount</th><th>Schedule</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminPromoBody"></tbody></table></div>
+          <div class="admin-pager" id="adminPromoPager"></div>
         </section>
       </div>
     </div>

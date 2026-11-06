@@ -28,6 +28,7 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-11-05 | Repeatable mutation checks added (`npm run test:mutation`); 10 guarded rules verified as genuinely covered | `tests/mutation-check.js`, `package.json` | Done — 10/10 mutations caught |
 | 2026-11-05 | CI activation handed off: browser-only instructions added for a maintainer, since the automated connection cannot write workflow files | `ci/README.md`, `README.md` | **Pending** — needs a maintainer to create `.github/workflows/tests.yml` |
 | 2026-11-05 | Admin lists gained search, status filters and paging for products, inventory and orders, backed by an exported `paginate()`/`matchesQuery()` pair shaped like a server API | `js/store.js`, `js/app.js`, `index.html`, `css/style.css`, `tests/` | Done — client-side only; 30 unit/DOM tests, 40 browser tests, 14/14 mutations caught. A hollow low-stock assertion was caught and fixed |
+| 2026-11-05 | Customers and Promotions joined the paged admin lists: name/email/city search on customers, status filters and search on promotions, both paged at 10 | `js/app.js`, `index.html`, `tests/` | Done — all five admin lists now consistent; 32 unit/DOM tests, 41 browser tests, 16/16 mutations caught |
 
 Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
 
@@ -84,7 +85,7 @@ Before starting a phase, agree on its design, acceptance criteria, dependencies 
 
 - [ ] Adapt the existing responsive admin to authenticated roles without discarding the current visual style or accessibility requirements. Evaluate a collapsible sidebar, breadcrumbs and profile controls against the approved design.
 - [ ] Add reusable, accessible data tables with server-side pagination, search and filters, including loading, empty and error states.
-  - Partly done 2026-11-05, ahead of Phase 1: the products, inventory and orders tables now search, filter and page against browser-local data. Paging is shaped like a server API (`page`, `pageCount`, `pageSize`, `total`, `start`) so a backend can take over the same contract. Loading and error states, reusable table components and true server-side behaviour still wait on the Phase 2 APIs.
+  - Partly done 2026-11-05, ahead of Phase 1: all five admin tables — products, inventory, orders, customers and promotions — now search, filter and page against browser-local data. Paging is shaped like a server API (`page`, `pageCount`, `pageSize`, `total`, `start`) so a backend can take over the same contract. Loading and error states, reusable table components and true server-side behaviour still wait on the Phase 2 APIs.
 - [ ] Connect product/inventory and order lists. Include order ID, customer, date, total and fulfillment status; identify low stock, initially using the source plan's **fewer than 5** threshold unless the owner chooses another value.
 - [ ] Ensure role-restricted actions are absent or disabled as appropriate; the server remains the final authority.
 
