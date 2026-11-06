@@ -4,6 +4,23 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Fixed — paging dropped keyboard focus to the page body
+
+- Pressing **Enter** on a pager arrow moved to the next page but left focus on `<body>`, so a keyboard or screen-reader user lost their place and had to tab back through the whole page on **every** page change. Reproduced in Chromium before the fix: `activeElement` went from the Next button to `BODY`.
+- The cause is that `renderPager` rebuilds the pager's `innerHTML`, destroying the focused button. Focus is now restored after the re-render.
+- **Chosen behaviour**: focus returns to the arrow just used. If that arrow is now disabled — the usual case, since reaching the last page disables Next — it falls back to the other arrow, and then to the live status line. The status line got `tabindex="-1"` so it can receive focus without adding another stop to the tab order.
+- **A second, wider bug was found while testing.** Focus restoration in the click handler alone did not cover re-renders triggered by anything else. Archiving products while sitting on page 2 clamps the reader back to page 1 and **still** dropped focus to `<body>`, because no pager click had occurred. Handling it inside `renderPager` covers both paths, since every list funnels through it.
+- A mouse click behaves the same way. Chrome focuses a button on mousedown, so the click arrives with the button focused and focus stays in the pager. An earlier assertion of mine claimed a click should leave focus elsewhere; that was wrong about browsers, and the test was corrected rather than the code.
+
+### Verification — pager focus
+
+- `npm test`: **35/35**. Three new jsdom tests: the focus path in both directions with the disabled-arrow fallback, the status-line fallback when neither arrow is usable, and focus surviving a re-render caused by archiving rather than paging. The focus test was **confirmed to fail** with the fix temporarily disabled, so it is not passing by accident.
+- Playwright: **42/42** in Chromium 153, with a new browser test that pages the product table with the keyboard, checks `activeElement` after each move, verifies focus never lands on the body, and covers the shrinking-list case.
+- `npm run test:mutation`: **18/18 caught**. Two new mutations — removing the focus restoration, and making the fallback blur instead of focusing a usable control — are each killed by the focus tests.
+- jsdom will not focus an element inside a `hidden` section, so these tests open the Admin panel first; without that they failed for a reason unrelated to the code.
+- **An interrupted mutation run left a mutation in the source tree.** Stopping `npm run test:mutation` mid-run skipped its `finally` block, leaving `js/store.js` altered, and the next `npm test` failed for a reason nobody had caused on purpose. The checker now registers `SIGINT`, `SIGTERM`, `SIGHUP`, `exit` and `uncaughtException` handlers that restore the in-flight file. The restore itself was confirmed against a real interrupted run (a mutation was on disk when the signal was sent and the file came back pristine), though the precise exit path varies with timing, so this is a safety net rather than a guarantee against `SIGKILL`.
+- After that interrupted run, one `npm test` invocation failed on the new focus test with "Page 2 of 1" — the signature of the unclamped-paging mutation, i.e. a mutation still in flight rather than a defect in the focus code. It did not reproduce in **6 consecutive full runs**, and the test passes in isolation and in the full suite.
+
 ### Added — customer and promotion lists join the paged admin
 
 - Customers and Promotions now use the same search, filter and paging pattern as Products, Inventory and Orders, so all five admin lists behave consistently. This completes the list work approved after PR #8.

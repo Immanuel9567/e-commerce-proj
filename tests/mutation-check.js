@@ -77,6 +77,24 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'paging drops keyboard focus back to the page body',
+    file: 'js/app.js',
+    from: `  if (hadFocusInside) restorePagerFocus(container, focusedDelta);`,
+    to: `  if (false) restorePagerFocus(container, focusedDelta);`
+  },
+  {
+    name: 'end-of-list fallback skips to the body instead of a usable control',
+    file: 'js/app.js',
+    from: `  for (const value of order) {
+    const button = container.querySelector(\`[data-page-delta="\${value}"]\`);
+    if (button && !button.disabled) { button.focus(); return; }
+  }`,
+    to: `  for (const value of order) {
+    const button = container.querySelector(\`[data-page-delta="\${value}"]\`);
+    if (button && !button.disabled) { button.blur(); return; }
+  }`
+  },
+  {
     name: 'status filters are ignored (every status shows)',
     file: 'js/app.js',
     from: `(adminPromoFilter === 'all' || status(promo) === adminPromoFilter)`,
@@ -140,6 +158,33 @@ if (!runTests().passed) {
 console.log('Baseline: npm test passes.\n');
 
 let survivors = 0;
+// A `finally` block restores the file after an exception, but it never runs if
+// the process is interrupted (Ctrl-C, or the runner being stopped). Track the
+// file currently mutated so a signal or hard exit can still put it back; an
+// interrupted run once left a mutation in place and the next `npm test` failed
+// for a reason nobody had caused deliberately.
+let inFlight = null;
+
+function restoreInFlight() {
+  if (!inFlight) return;
+  try { fs.writeFileSync(inFlight.file, inFlight.original); } catch (_) { /* best effort */ }
+  inFlight = null;
+}
+
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(signal, () => {
+    restoreInFlight();
+    console.log(`\nInterrupted - restored ${path.relative(root, inFlight ? inFlight.file : '') || 'the tree'}.`);
+    process.exit(130);
+  });
+}
+process.on('exit', restoreInFlight);
+process.on('uncaughtException', error => {
+  restoreInFlight();
+  console.error(error);
+  process.exit(1);
+});
+
 for (const testCase of cases) {
   const file = path.join(root, testCase.file);
   const original = fs.readFileSync(file, 'utf8');
@@ -148,6 +193,7 @@ for (const testCase of cases) {
     survivors++;
     continue;
   }
+  inFlight = { file, original };
   fs.writeFileSync(file, original.replace(testCase.from, testCase.to));
   try {
     const result = runTests();
@@ -160,6 +206,7 @@ for (const testCase of cases) {
     }
   } finally {
     fs.writeFileSync(file, original);
+    inFlight = null;
   }
 }
 

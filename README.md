@@ -24,7 +24,7 @@ Promotions can be percentage or fixed-amount codes, or automatic sales with opti
 
 - This is not a production admin system: anyone using the page can open Admin, data is not shared between devices, and clearing browser storage removes it. Do not enter real customer or payment information.
 - Checkout does not collect payment or submit a real order. Refunds only record a local status; no money is returned. Stock is reduced when a local order is placed; cancellations restock items, refunds do not.
-- Every admin table — Products, Inventory, Orders, Customers and Promotions — **searches, filters and pages** 10 rows at a time; the pager shows the visible range and total. Paging is client-side but returns a server-shaped result (`page`, `pageCount`, `total`), so a real API can replace it without rewriting the tables.
+- Every admin table — Products, Inventory, Orders, Customers and Promotions — **searches, filters and pages** 10 rows at a time, and paging is keyboard-usable: focus stays on the pager instead of jumping back to the top of the page; the pager shows the visible range and total. Paging is client-side but returns a server-shaped result (`page`, `pageCount`, `total`), so a real API can replace it without rewriting the tables.
 - Products are retired by **archiving**, not deleting. Archiving removes a product from the storefront, search, inventory and low-stock counts, and from bags and saved items, but keeps it in Admin under the **Archived** filter with every past order intact, and it can be restored. Permanent deletion is a two-step action available only on archived products, and it is refused outright for any product that appears in a past order.
 - The earlier checkout generated reference codes without saving orders. Those past codes cannot be recovered from the old application; new orders retain the same reference in Account and Admin.
 - A production deployment needs authenticated, role-restricted server/database access, shared storage, a payment provider and verified payment/refund events. Client-side access controls and local storage are not a security boundary.
@@ -50,7 +50,7 @@ This was verified with Chromium 153 in a Debian 12 sandbox; it does not replace 
 
 > **Maintainer task (about one minute, no setup):** CI is written but switched off, because the connection that pushes this repo cannot write to `.github/workflows/`. To turn it on, copy the contents of [`ci/tests.yml`](ci/tests.yml) into a new file at `.github/workflows/tests.yml` using GitHub's **Add file → Create new file** button. Step-by-step instructions are in [`ci/README.md`](ci/README.md). Until then, run both suites locally before opening a pull request.
 
-`npm run test:mutation` checks the tests themselves (16 rules today, including paging, search and status filters): it breaks one business rule at a time and reports whether the suite notices. A rule whose mutation leaves every test green is reported as **SURVIVED**, meaning it is not genuinely covered. Run it after adding or changing a guarded rule.
+`npm run test:mutation` checks the tests themselves (18 rules today, including paging, search, status filters and pager focus): it breaks one business rule at a time and reports whether the suite notices. A rule whose mutation leaves every test green is reported as **SURVIVED**, meaning it is not genuinely covered. Run it after adding or changing a guarded rule.
 
 `npm test` runs two suites and needs no browser:
 
