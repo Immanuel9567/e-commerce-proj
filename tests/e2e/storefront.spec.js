@@ -530,3 +530,37 @@ test('keyboard users can page the admin lists without losing focus', async ({ pa
   });
   expect(parked).toBe('admin-pager-status');
 });
+
+test('paging announces the new range through a live region that survives re-renders', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="products"]').click();
+  await page.locator('[data-product-filter="all"]').click();
+
+  const announcer = page.locator('#adminListAnnouncer');
+  await expect(announcer).toHaveAttribute('aria-live', 'polite');
+  await expect(announcer).toHaveAttribute('role', 'status');
+  await expect(announcer).toContainText('Showing 1–10 of 14 products in the catalogue, page 1 of 2');
+
+  // Mark the node, page, and confirm it is the same element afterwards: a live
+  // region that is rebuilt and changed in one task is not announced.
+  await page.evaluate(() => { document.getElementById('adminListAnnouncer').dataset.probe = 'kept'; });
+  await page.locator('[data-page-target="products"][data-page-delta="1"]').click();
+  await expect(announcer).toContainText('Showing 11–14 of 14 products in the catalogue, page 2 of 2');
+  expect(await page.evaluate(() => document.getElementById('adminListAnnouncer').dataset.probe)).toBe('kept');
+
+  // Nothing inside a rebuilt pager carries aria-live any more.
+  expect(await page.locator('#adminProductPager [aria-live]').count()).toBe(0);
+
+  // Inventory sounds different from products, so switching lists is announced.
+  await page.locator('[data-admin="inventory"]').click();
+  await page.locator('[data-inventory-filter="all"]').click();
+  await expect(announcer).toContainText('products in inventory');
+
+  // An empty list announces nothing rather than a misleading "showing 0".
+  await page.locator('[data-admin="orders"]').click();
+  await expect(page.locator('#adminOrderPager')).toBeHidden();
+  const text = await announcer.textContent();
+  expect(text.trim()).toBe('');
+});

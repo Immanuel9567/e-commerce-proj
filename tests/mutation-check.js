@@ -77,6 +77,18 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'page changes are not announced to assistive tech',
+    file: 'js/app.js',
+    from: `  announceListChange(state.key, total === 0 ? '' : summary);`,
+    to: `  /* announcement removed */`
+  },
+  {
+    name: 'the live region is rebuilt with the pager instead of persisting',
+    file: 'js/app.js',
+    from: `    void announcer.offsetWidth;`,
+    to: `    announcer.remove();`
+  },
+  {
     name: 'paging drops keyboard focus back to the page body',
     file: 'js/app.js',
     from: `  if (hadFocusInside) restorePagerFocus(container, focusedDelta);`,
@@ -150,6 +162,37 @@ const runTests = () => {
 const failingTests = output => [...new Set(
   [...output.matchAll(/^not ok \d+ - (.+)$/gm)].map(match => match[1].trim())
 )];
+
+// Refuse to start on a tree with uncommitted changes to the files this script
+// edits. A half-applied mutation looks exactly like a dirty working tree, and
+// starting from one means the next failure is impossible to attribute. This is
+// the guard that would have caught the interrupted run that left a mutation in
+// js/store.js. Only the files it mutates are checked, so ordinary work in
+// progress elsewhere does not block a run.
+function dirtyTargets(files) {
+  try {
+    const entries = files.map(file => path.relative(root, path.join(root, file))).join(' ');
+    return execFileSync('git', ['status', '--porcelain', '--', ...entries.split(' ')], {
+      cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+  } catch (_) {
+    return ''; // no git, or the files are untracked: nothing to compare against
+  }
+}
+
+const targetFiles = [...new Set(cases.map(testCase => testCase.file))];
+const dirty = dirtyTargets(targetFiles);
+if (dirty && process.env.ALLOW_DIRTY !== '1') {
+  console.error(`Refusing to run: these files have uncommitted changes, which may be a leftover mutation:\n\n${dirty}\n`);
+  console.error('Commit or discard them first, then re-run `npm run test:mutation`.');
+  console.error('If the changes are deliberate work in progress, the run is still safe to start');
+  console.error('from their current contents; re-run with ALLOW_DIRTY=1 to say so explicitly.');
+  process.exit(1);
+}
+if (dirty) {
+  console.log('Starting from uncommitted changes (ALLOW_DIRTY=1); each case is diffed against');
+  console.log('the state found at startup, not against git HEAD.\n');
+}
 
 if (!runTests().passed) {
   console.error('Baseline `npm test` is already failing. Fix that before running mutation checks.');

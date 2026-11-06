@@ -4,6 +4,25 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — page changes are now announced to screen readers
+
+- Paging changed the visible rows silently. The `aria-live` region sat **inside** the pager, whose `innerHTML` `renderPager` replaces on every render, so the live region was destroyed and recreated in the same task as its text change. Verified in Chromium by tagging the node: after one page change the original element no longer existed. A live region has to be in the DOM *before* its content changes to be announced reliably, so the existing markup was not working.
+- Added one persistent `#adminListAnnouncer` (`role="status"`, `aria-live="polite"`, `aria-atomic="true"`, visually hidden) outside every pager, updated in place. The `aria-live` on the pager status line was removed, since that element is rebuilt every time and a live region there is unreliable.
+- Announcements read like "Showing 11–14 of 14 products in the catalogue, page 2 of 2". Products and Inventory both say "products" on screen, so the spoken label names the list — otherwise switching between them produced an identical message that would announce nothing.
+- A repeated identical message is cleared and rewritten with a forced reflow first, because a live region receiving the same text twice usually stays silent.
+- **Two gaps found while testing, both fixed.** An empty list returned before the announcement, leaving the previous list's range in the region as if it described this list; it now clears. And switching admin tabs only toggled panel visibility, so the region kept describing the list just left; the opened list is now re-rendered so its own range is announced.
+
+### Added — the mutation checker refuses to start from a dirty tree
+
+- `npm run test:mutation` now refuses to run when `js/store.js` or `js/app.js` has uncommitted changes, because a half-applied mutation looks exactly like a dirty working tree and starting from one makes the next failure impossible to attribute. This is the guard that would have caught the interrupted run that left a mutation in `js/store.js` earlier in this session.
+- Deliberate work in progress is still runnable with `ALLOW_DIRTY=1`; that was needed immediately, since editing `js/app.js` and then checking mutations before committing is the normal loop. Each case is diffed against the state found at startup, not against git HEAD.
+
+### Verification — announcements and the mutation guard
+
+- `npm test`: **37/37**. Two new jsdom tests: the live region persists across a re-render (checked by tagging the node and confirming the same node survives with its state), carries the right ARIA attributes, and ends up empty for an empty list; plus the repeat-announcement path.
+- Playwright: **43/43** in Chromium 153, with a browser test that pages, confirms the tagged live region is the same node afterwards, checks no `aria-live` remains inside the pager, checks inventory sounds different from products, and checks an empty list announces nothing.
+- `npm run test:mutation`: **20/20 caught**. Two new mutations — removing the announcement, and destroying the live region — are both killed.
+
 ### Fixed — paging dropped keyboard focus to the page body
 
 - Pressing **Enter** on a pager arrow moved to the next page but left focus on `<body>`, so a keyboard or screen-reader user lost their place and had to tab back through the whole page on **every** page change. Reproduced in Chromium before the fix: `activeElement` went from the Next button to `BODY`.
