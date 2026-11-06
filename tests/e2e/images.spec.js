@@ -13,18 +13,24 @@ test('uploaded product images survive editing and can be removed', async ({ page
   const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2p0AAAAASUVORK5CYII=', 'base64');
   await page.locator('#productImageFile').setInputFiles({ name: 'object.png', mimeType: 'image/png', buffer: image });
   await page.locator('#adminProductForm button[type="submit"]').click();
+  // The products table is paged, so find the new row through search instead of
+  // assuming it lands on the visible page.
+  await page.locator('#adminProductSearch').fill('Uploaded object');
   let row = page.locator('#adminProductBody tr').filter({ hasText: 'Uploaded object' });
   await expect(row).toBeVisible();
   await row.getByRole('button', { name: 'Edit' }).click();
   await expect(page.locator('#productImage')).toHaveValue('');
   await page.locator('#productName').fill('Edited object');
   await page.locator('#adminProductForm button[type="submit"]').click();
+  await page.locator('#adminProductSearch').fill('Edited object');
+  await page.locator('#adminProductBody tr').filter({ hasText: 'Edited object' }).waitFor();
   await page.locator('#adminCloseBtn').click();
   await page.locator('#searchInput').fill('Edited object');
   await expect(page.locator('.product-card img')).toHaveAttribute('src', /^data:image\/png;base64,/);
   await page.reload();
   await page.locator('[data-tab="admin"]').click();
   await page.locator('[data-admin="products"]').click();
+  await page.locator('#adminProductSearch').fill('Edited object');
   row = page.locator('#adminProductBody tr').filter({ hasText: 'Edited object' });
   await row.getByRole('button', { name: 'Edit' }).click();
   await page.locator('#productRemoveImage').check();

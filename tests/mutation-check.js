@@ -77,6 +77,30 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'a page past the end is not clamped to the last page',
+    file: 'js/store.js',
+    from: `  const current = Math.min(pageCount, Math.max(1, requested));`,
+    to: `  const current = Math.max(1, requested);`
+  },
+  {
+    name: 'last page is not truncated to the remaining items',
+    file: 'js/store.js',
+    from: `items: list.slice(start, start + size) };`,
+    to: `items: list.slice(start) };`
+  },
+  {
+    name: 'search ignores the trimmed query (whitespace breaks matching)',
+    file: 'js/store.js',
+    from: `  const needle = String(query == null ? '' : query).trim().toLowerCase();`,
+    to: `  const needle = String(query == null ? '' : query).toLowerCase();`
+  },
+  {
+    name: 'search is case-sensitive',
+    file: 'js/store.js',
+    from: `  return values.some(value => String(value == null ? '' : value).toLowerCase().includes(needle));`,
+    to: `  return values.some(value => String(value == null ? '' : value).includes(needle));`
+  },
+  {
     name: 'bag can exceed available stock',
     file: 'js/store.js',
     from: `    if (quantity > available) throw new Error(available > 0 ? \`Only \${available} more available.\` : 'No more of this item are available.');`,

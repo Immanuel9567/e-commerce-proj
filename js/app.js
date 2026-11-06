@@ -383,7 +383,35 @@ function renderAdminPanel() {
   renderAdminDiscounts();
 }
 
+function renderPager(container, state, label, reload) {
+  if (!container) return;
+  const { page, pageCount, total, start, items } = paginate(state.items, state.page, ADMIN_PAGE_SIZE);
+  state.page = page;
+  const first = total === 0 ? 0 : start + 1;
+  const last = start + items.length;
+  // With nothing to page, the table's own contextual empty message is the one
+  // to read; a second "nothing here" line plus dead arrows is just noise.
+  container.hidden = total === 0;
+  if (total === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `<p class="admin-pager-status" aria-live="polite">${`Showing ${first}\u2013${last} of ${total} ${escapeHtml(label)}`}</p>
+    <div class="admin-pager-controls">
+      <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="-1" ${page <= 1 ? 'disabled' : ''}>Previous</button>
+      <span class="admin-pager-page">Page ${page} of ${pageCount}</span>
+      <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="1" ${page >= pageCount ? 'disabled' : ''}>Next</button>
+    </div>`;
+}
+
 let adminProductFilter = 'active';
+let adminOrderFilter = 'all';
+let adminInventoryFilter = 'all';
+const adminListState = {
+  products: { key: 'products', query: '', page: 1 },
+  orders: { key: 'orders', query: '', page: 1 },
+  inventory: { key: 'inventory', query: '', page: 1 }
+};
 
 function productActions(product) {
   const id = escapeHtml(product.id);
@@ -399,17 +427,22 @@ function renderAdminProducts() {
     pill.classList.toggle('active', active);
     pill.setAttribute('aria-pressed', String(active));
   });
+  const state = adminListState.products;
   const all = AppStore.products;
-  const visible = adminProductFilter === 'all' ? all : all.filter(product => adminProductFilter === 'archived' ? product.archived : !product.archived);
-  const emptyMessage = adminProductFilter === 'archived'
-    ? 'No archived products.'
-    : adminProductFilter === 'active' ? 'No active products yet.' : 'No products yet.';
-  $('adminProductBody').innerHTML = visible.length ? visible.map(product => `<tr${product.archived ? ' class="admin-row-archived"' : ''}>
+  const matching = all.filter(product => adminProductFilter === 'all' ? true : adminProductFilter === 'archived' ? product.archived : !product.archived)
+    .filter(product => matchesQuery(state.query, product.title, product.categoryName, (product.tags || []).join(' ')));
+  state.items = matching;
+  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
+  const emptyMessage = all.length === 0
+    ? 'No products yet.'
+    : state.query ? `No products match \u201c${state.query}\u201d.` : adminProductFilter === 'archived' ? 'No archived products.' : 'No active products yet.';
+  $('adminProductBody').innerHTML = total ? items.map(product => `<tr${product.archived ? ' class="admin-row-archived"' : ''}>
     <td data-label="Product"><div><strong>${escapeHtml(product.title)}</strong><span class="admin-subline">${escapeHtml((product.tags || []).join(' · ') || product.id)}</span></div></td>
     <td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Price">${money(product.price)}</td><td data-label="Stock">${product.stock}</td>
     <td data-label="Status"><span class="admin-status-badge ${product.archived ? 'status-archived' : 'status-ok'}">${product.archived ? 'Archived' : 'Active'}</span></td>
     <td data-label="Actions">${productActions(product)}</td>
-  </tr>`).join('') : `<tr><td colspan="6" class="table-empty">${emptyMessage}</td></tr>`;
+  </tr>`).join('') : `<tr><td colspan="6" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
+  renderPager($('adminProductPager'), state, 'products');
 }
 
 function orderStatusControl(order) {
@@ -426,7 +459,21 @@ function refundAction(order) {
 }
 
 function renderAdminOrders() {
-  $('adminOrderBody').innerHTML = AppStore.orders.length ? AppStore.orders.map(order => {
+  document.querySelectorAll('[data-order-filter]').forEach(pill => {
+    const active = pill.dataset.orderFilter === adminOrderFilter;
+    pill.classList.toggle('active', active);
+    pill.setAttribute('aria-pressed', String(active));
+  });
+  const state = adminListState.orders;
+  const matching = AppStore.orders
+    .filter(order => adminOrderFilter === 'all' || order.status === adminOrderFilter)
+    .filter(order => matchesQuery(state.query, order.reference, order.customer.name, order.customer.email, titleCase(order.status), order.items.map(item => item.title).join(' ')));
+  state.items = matching;
+  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
+  const emptyMessage = AppStore.orders.length === 0
+    ? 'No orders yet.'
+    : state.query ? `No orders match \u201c${state.query}\u201d.` : `No ${adminOrderFilter} orders.`;
+  $('adminOrderBody').innerHTML = total ? items.map(order => {
     const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
     return `<tr>
       <td data-label="Reference"><div><strong>${escapeHtml(order.reference)}</strong><span class="admin-subline">${escapeHtml(formatDate(order.createdAt))}</span></div></td>
@@ -436,7 +483,8 @@ function renderAdminOrders() {
       <td data-label="Status">${orderStatusControl(order)}</td>
       <td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="order-details" data-reference="${escapeHtml(order.reference)}">View details</button>${refundAction(order)}</div></td>
     </tr>`;
-  }).join('') : '<tr><td colspan="6" class="table-empty">No orders yet.</td></tr>';
+  }).join('') : `<tr><td colspan="6" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
+  renderPager($('adminOrderPager'), state, 'orders');
   const details = $('orderDetails');
   if (!details.hidden && details.dataset.reference) renderOrderDetails(details.dataset.reference);
 }
@@ -457,11 +505,28 @@ function renderAdminInventory() {
   const low = AppStore.availableProducts.filter(product => product.stock > 0 && product.stock < 5).length;
   const out = AppStore.availableProducts.filter(product => product.stock === 0).length;
   $('inventorySummary').innerHTML = `<strong>${low + out}</strong><span>${low + out === 1 ? 'product needs' : 'products need'} attention</span><span class="inventory-summary-detail">${low} low stock · ${out} out of stock</span>`;
-  $('adminInventoryBody').innerHTML = AppStore.availableProducts.length ? AppStore.availableProducts.map(product => {
+  document.querySelectorAll('[data-inventory-filter]').forEach(pill => {
+    const active = pill.dataset.inventoryFilter === adminInventoryFilter;
+    pill.classList.toggle('active', active);
+    pill.setAttribute('aria-pressed', String(active));
+  });
+  const state = adminListState.inventory;
+  const matching = AppStore.availableProducts
+    .filter(product => adminInventoryFilter === 'all'
+      ? true
+      : adminInventoryFilter === 'out' ? product.stock === 0 : product.stock > 0 && product.stock < 5)
+    .filter(product => matchesQuery(state.query, product.title, product.categoryName));
+  state.items = matching;
+  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
+  const emptyMessage = AppStore.availableProducts.length === 0
+    ? 'No products yet.'
+    : state.query ? `No products match \u201c${state.query}\u201d.` : adminInventoryFilter === 'out' ? 'Nothing is out of stock.' : 'Everything is above the low-stock threshold.';
+  $('adminInventoryBody').innerHTML = total ? items.map(product => {
     const status = product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'ok';
     const label = status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'In stock';
     return `<tr><td data-label="Product"><strong>${escapeHtml(product.title)}</strong></td><td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Stock quantity"><input class="stock-input" type="number" min="0" step="1" value="${product.stock}" data-stock-id="${escapeHtml(product.id)}" aria-label="Stock for ${escapeHtml(product.title)}"></td><td data-label="Status"><span class="admin-status-badge status-${status}">${label}</span></td><td data-label="Update"><button type="button" class="admin-action-btn" data-admin-action="save-stock" data-id="${escapeHtml(product.id)}">Save stock</button></td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="table-empty">No products yet.</td></tr>';
+  }).join('') : `<tr><td colspan="5" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
+  renderPager($('adminInventoryPager'), state, 'products');
 }
 
 function renderAdminCustomers() {
@@ -757,8 +822,40 @@ function initEventListeners() {
   }));
   document.querySelectorAll('[data-product-filter]').forEach(pill => pill.addEventListener('click', () => {
     adminProductFilter = pill.dataset.productFilter;
+    adminListState.products.page = 1;
     renderAdminProducts();
   }));
+  document.querySelectorAll('[data-order-filter]').forEach(pill => pill.addEventListener('click', () => {
+    adminOrderFilter = pill.dataset.orderFilter;
+    adminListState.orders.page = 1;
+    renderAdminOrders();
+  }));
+  document.querySelectorAll('[data-inventory-filter]').forEach(pill => pill.addEventListener('click', () => {
+    adminInventoryFilter = pill.dataset.inventoryFilter;
+    adminListState.inventory.page = 1;
+    renderAdminInventory();
+  }));
+  // Search resets to page one, so results are never hidden on a later page.
+  [['adminProductSearch', 'products', renderAdminProducts],
+   ['adminOrderSearch', 'orders', renderAdminOrders],
+   ['adminInventorySearch', 'inventory', renderAdminInventory]].forEach(([id, key, rerender]) => {
+    const input = $(id);
+    if (!input) return;
+    input.addEventListener('input', () => {
+      adminListState[key].query = input.value;
+      adminListState[key].page = 1;
+      rerender();
+    });
+  });
+  document.querySelector('.admin-content').addEventListener('click', event => {
+    const button = event.target.closest('[data-page-target]');
+    if (!button) return;
+    const state = adminListState[button.dataset.pageTarget];
+    if (!state) return;
+    const rerender = { products: renderAdminProducts, orders: renderAdminOrders, inventory: renderAdminInventory }[state.key];
+    state.page = Math.max(1, (state.page || 1) + Number(button.dataset.pageDelta));
+    rerender();
+  });
   $('addProductBtn').addEventListener('click', () => openProductEditor(null));
   $('cancelProductEdit').addEventListener('click', () => { $('adminProductEditor').hidden = true; });
   $('adminProductForm').addEventListener('submit', async event => {
