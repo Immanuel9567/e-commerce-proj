@@ -368,3 +368,30 @@ test('admin list search matches the fields an operator would type', () => {
   assert.equal(matchesQuery('ada@example.com', 'Ada Customer', 'ada@example.com'), true);
   assert.equal(matchesQuery('delivered', 'REF-1', 'Delivered'), true);
 });
+
+test('an unreadable saved state is reported instead of silently discarded', () => {
+  // A key that was never written is a first visit, not a problem.
+  const fresh = makeStore();
+  assert.equal(fresh.recovery, null, 'a first visit reports nothing');
+
+  // A value that exists but does not parse is real data that is now unreadable.
+  const corrupt = makeStore(new MemoryStorage({ [STORE_STATE_KEY]: '{"products": [broken' }));
+  assert.ok(corrupt.recovery, 'corrupt saved data is reported');
+  assert.equal(corrupt.recovery.reason, 'unreadable');
+  assert.equal(corrupt.recovery.bytes, '{"products": [broken'.length);
+  assert.equal(corrupt.products.length, seed.length, 'it falls back to seed data as before');
+
+  // A parsed value of the wrong shape also counts: the shop would otherwise
+  // look normal while every saved collection was missing.
+  const wrongShape = makeStore(new MemoryStorage({ [STORE_STATE_KEY]: '"just a string"' }));
+  assert.ok(wrongShape.recovery, 'a non-object saved state is reported');
+  assert.equal(wrongShape.recovery.reason, 'unexpected shape');
+
+  // Valid saved data reports nothing.
+  const storage = new MemoryStorage();
+  const healthy = new Store(seed, storage, fixedDate);
+  healthy.addToCart('one');
+  const reopened = new Store(seed, storage, fixedDate);
+  assert.equal(reopened.recovery, null, 'readable saved data reports nothing');
+  assert.equal(reopened.cart.length, 1, 'and the data really was read');
+});

@@ -77,6 +77,18 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'unreadable saved data is discarded silently',
+    file: 'js/store.js',
+    from: `      const unreadable = saved === null || typeof saved !== 'object';`,
+    to: `      const unreadable = false;`
+  },
+  {
+    name: 'a first visit is mistaken for unreadable saved data',
+    file: 'js/store.js',
+    from: `    if (raw !== null) {`,
+    to: `    if (true) {`
+  },
+  {
     name: 'empty rows hard-code five columns, whatever the table has',
     file: 'js/app.js',
     from: `    const columns = body.closest('table').querySelectorAll('thead th').length;`,

@@ -191,6 +191,16 @@
         <div class="admin-local-note"><span aria-hidden="true"></span> Local preview</div>
       </aside>
       <div class="admin-content">
+        <!-- Only shown when saved data existed but could not be read. Without
+             this the shop silently reverts to seed data and past orders vanish
+             with no explanation. -->
+        <div class="admin-recovery" id="adminRecovery" role="alert" hidden>
+          <div>
+            <strong>Saved data could not be read.</strong>
+            <span id="adminRecoveryDetail">The catalogue and orders below are the built-in defaults, not your saved data. Nothing has been overwritten yet.</span>
+          </div>
+          <button type="button" class="admin-action-btn" id="adminRecoveryDismiss">Dismiss</button>
+        </div>
         <section class="admin-panel active" id="admin-analytics">
           <div class="admin-panel-header"><div><div class="section-kicker">STORE PERFORMANCE</div><h3>Overview</h3><p>Your store, at a glance.</p></div></div>
           <div class="analytics-grid">
