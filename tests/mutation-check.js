@@ -77,6 +77,18 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'status filters are ignored (every status shows)',
+    file: 'js/app.js',
+    from: `(adminPromoFilter === 'all' || status(promo) === adminPromoFilter)`,
+    to: `(adminPromoFilter === 'all' || true)`
+  },
+  {
+    name: 'customer search ignores the customer name',
+    file: 'js/app.js',
+    from: `matchesQuery(state.query, customer.name, customer.email, customerCities(customer))`,
+    to: `matchesQuery(state.query, customer.email, customerCities(customer))`
+  },
+  {
     name: 'a page past the end is not clamped to the last page',
     file: 'js/store.js',
     from: `  const current = Math.min(pageCount, Math.max(1, requested));`,

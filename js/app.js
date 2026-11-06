@@ -407,10 +407,13 @@ function renderPager(container, state, label, reload) {
 let adminProductFilter = 'active';
 let adminOrderFilter = 'all';
 let adminInventoryFilter = 'all';
+let adminPromoFilter = 'all';
 const adminListState = {
   products: { key: 'products', query: '', page: 1 },
   orders: { key: 'orders', query: '', page: 1 },
-  inventory: { key: 'inventory', query: '', page: 1 }
+  inventory: { key: 'inventory', query: '', page: 1 },
+  customers: { key: 'customers', query: '', page: 1 },
+  promotions: { key: 'promotions', query: '', page: 1 }
 };
 
 function productActions(product) {
@@ -530,11 +533,22 @@ function renderAdminInventory() {
 }
 
 function renderAdminCustomers() {
-  const customers = AppStore.getCustomers();
-  $('adminCustomerBody').innerHTML = customers.length ? customers.map(customer => `<tr>
+  const state = adminListState.customers;
+  const all = AppStore.getCustomers();
+  // getCustomers() carries name, email and orders, not the delivery city, so
+  // cities come from the customer's own orders. The search box promises it.
+  const customerCities = customer => [...new Set(customer.orders.map(order => order.customer && order.customer.city).filter(Boolean))].join(' ');
+  const customers = all.filter(customer => matchesQuery(state.query, customer.name, customer.email, customerCities(customer)));
+  state.items = customers;
+  const paged = paginate(customers, state.page, ADMIN_PAGE_SIZE);
+  state.page = paged.page;
+  $('adminCustomerBody').innerHTML = paged.items.length ? paged.items.map(customer => `<tr>
     <td data-label="Customer"><div><strong>${escapeHtml(customer.name)}</strong><span class="admin-subline">${escapeHtml(customer.email)}</span></div></td><td data-label="Orders">${customer.orders.length}</td><td data-label="Spent">${money(customer.spent)}</td>
     <td data-label="Account status"><select class="admin-status-select" data-admin-action="customer-status" data-email="${escapeHtml(customer.email)}" aria-label="Account status for ${escapeHtml(customer.name)}"><option value="active" ${customer.status === 'active' ? 'selected' : ''}>Active</option><option value="blocked" ${customer.status === 'blocked' ? 'selected' : ''}>Blocked</option></select></td>
-    <td data-label="History"><button type="button" class="admin-action-btn" data-admin-action="customer-history" data-email="${escapeHtml(customer.email)}">View history</button></td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No customers yet.</td></tr>';
+    <td data-label="History"><button type="button" class="admin-action-btn" data-admin-action="customer-history" data-email="${escapeHtml(customer.email)}">View history</button></td></tr>`).join('')
+    : `<tr><td colspan="5" class="table-empty">${all.length === 0 ? 'No customers yet.'
+      : state.query ? `No customers match \u201c${escapeHtml(state.query)}\u201d.` : 'No customers to show.'}</td></tr>`;
+  renderPager($('adminCustomerPager'), state, 'customers');
   const history = $('customerHistory');
   if (!history.hidden && history.dataset.email) renderCustomerHistory(history.dataset.email);
 }
@@ -565,12 +579,29 @@ function renderAdminAnalytics() {
 }
 
 function renderAdminDiscounts() {
-  $('adminPromoBody').innerHTML = AppStore.promotions.length ? AppStore.promotions.map(promo => {
+  document.querySelectorAll('[data-promo-filter]').forEach(pill => {
+    const active = pill.dataset.promoFilter === adminPromoFilter;
+    pill.classList.toggle('active', active);
+    pill.setAttribute('aria-pressed', String(active));
+  });
+  const state = adminListState.promotions;
+  const all = AppStore.promotions;
+  const status = promo => AppStore.promotionStatus(promo);
+  const promotions = all.filter(promo => (adminPromoFilter === 'all' || status(promo) === adminPromoFilter)
+    && matchesQuery(state.query, promo.code, promo.type === 'amount' ? `${money(promo.amount)} off` : `${promo.percent}% off`, status(promo)));
+  state.items = promotions;
+  const paged = paginate(promotions, state.page, ADMIN_PAGE_SIZE);
+  state.page = paged.page;
+  $('adminPromoBody').innerHTML = paged.items.length ? paged.items.map(promo => {
     const status = AppStore.promotionStatus(promo);
     const schedule = promo.start || promo.end ? `${promo.start || 'Any time'} – ${promo.end || 'No end date'}` : 'Always';
     const discount = promo.type === 'amount' ? `${money(promo.amount)} off` : `${promo.percent}% off`;
     return `<tr><td data-label="Code"><div><strong>${escapeHtml(promo.code)}</strong>${promo.automatic ? '<span class="admin-subline">Automatic sale</span>' : ''}</div></td><td data-label="Discount">${escapeHtml(discount)}</td><td data-label="Schedule">${escapeHtml(schedule)}</td><td data-label="Status"><span class="admin-status-badge status-${status === 'active' ? 'ok' : status}">${escapeHtml(titleCase(status))}</span></td><td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="toggle-promo" data-code="${escapeHtml(promo.code)}">${promo.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-action-btn danger" data-admin-action="delete-promo" data-code="${escapeHtml(promo.code)}">Delete</button></div></td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="table-empty">No promotions yet.</td></tr>';
+  }).join('')
+    : `<tr><td colspan="5" class="table-empty">${all.length === 0 ? 'No promotions yet.'
+      : state.query ? `No promotions match \u201c${escapeHtml(state.query)}\u201d.`
+        : adminPromoFilter === 'active' ? 'No promotions are active right now.' : `No ${escapeHtml(adminPromoFilter)} promotions.`}</td></tr>`;
+  renderPager($('adminPromoPager'), state, 'promotions');
 }
 
 function openProductEditor(product) {
@@ -835,10 +866,17 @@ function initEventListeners() {
     adminListState.inventory.page = 1;
     renderAdminInventory();
   }));
+  document.querySelectorAll('[data-promo-filter]').forEach(pill => pill.addEventListener('click', () => {
+    adminPromoFilter = pill.dataset.promoFilter;
+    adminListState.promotions.page = 1;
+    renderAdminDiscounts();
+  }));
   // Search resets to page one, so results are never hidden on a later page.
   [['adminProductSearch', 'products', renderAdminProducts],
    ['adminOrderSearch', 'orders', renderAdminOrders],
-   ['adminInventorySearch', 'inventory', renderAdminInventory]].forEach(([id, key, rerender]) => {
+   ['adminInventorySearch', 'inventory', renderAdminInventory],
+   ['adminCustomerSearch', 'customers', renderAdminCustomers],
+   ['adminPromoSearch', 'promotions', renderAdminDiscounts]].forEach(([id, key, rerender]) => {
     const input = $(id);
     if (!input) return;
     input.addEventListener('input', () => {
@@ -852,7 +890,8 @@ function initEventListeners() {
     if (!button) return;
     const state = adminListState[button.dataset.pageTarget];
     if (!state) return;
-    const rerender = { products: renderAdminProducts, orders: renderAdminOrders, inventory: renderAdminInventory }[state.key];
+    const rerender = { products: renderAdminProducts, orders: renderAdminOrders, inventory: renderAdminInventory,
+      customers: renderAdminCustomers, promotions: renderAdminDiscounts }[state.key];
     state.page = Math.max(1, (state.page || 1) + Number(button.dataset.pageDelta));
     rerender();
   });

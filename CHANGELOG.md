@@ -4,6 +4,20 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Added — customer and promotion lists join the paged admin
+
+- Customers and Promotions now use the same search, filter and paging pattern as Products, Inventory and Orders, so all five admin lists behave consistently. This completes the list work approved after PR #8.
+- **Customers** gained a search box matching **name, email and delivery city**, plus 10-row paging. City is not part of `getCustomers()`'s own shape, so it is read from the customer's orders and de-duplicated — the placeholder promises city search, so it had to actually work.
+- **Promotions** gained a search box (code, discount text and status) and status filter pills — All, Active, Scheduled, Expired, Disabled — alongside paging. The pills keep `aria-pressed` in sync with the active filter.
+- Filter and search changes reset to page one on both lists, and empty results explain themselves: "No customers yet.", "No customers match …", "No promotions are active right now.", "No expired promotions."
+- Promotions paging is deliberately still client-side but server-shaped, like the other four lists.
+
+### Verification — customer and promotion lists
+
+- `npm test`: **32/32**. Two new jsdom tests drive a 12-customer list through paging, name/email/city search and the empty state, and take 13 promotions through status filtering, search and a status with no matches.
+- Playwright: **41/41** in Chromium 153, with a new browser test that searches and pages promotions, toggles one off, and confirms it moves between the Active and Disabled filters.
+- `npm run test:mutation`: **16/16 caught**. Two new mutations target this work — ignoring the promotion status filter, and dropping the customer name from search. The second **survived on the first run**, because the test searched by email and city but never by a name that an email could not match; it now searches `shopper 7` (the space makes an email match impossible) and the mutation is caught.
+
 ### Added — admin search, filters and paging
 
 - The Products, Inventory and Orders admin tables can now be **searched, filtered and paged** instead of rendering every row at once. Customers and Promotions are unchanged.

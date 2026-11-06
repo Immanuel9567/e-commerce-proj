@@ -425,3 +425,42 @@ test('admin search, status filters and paging work in a real browser', async ({ 
   // With no orders the table's own empty message stands alone: no pager, no dead arrows.
   await expect(page.locator('#adminOrderPager')).toBeHidden();
 });
+
+test('admin customer and promotion lists search, filter and page', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="customers"]').click();
+
+  // No orders yet on a fresh profile, so the list is empty and says so once.
+  await expect(page.locator('#adminCustomerBody')).toContainText('No customers yet');
+  await expect(page.locator('#adminCustomerPager')).toBeHidden();
+
+  await page.locator('[data-admin="discounts"]').click();
+  await expect(page.locator('#adminPromoBody tr')).not.toHaveCount(0);
+  await expect(page.locator('#adminPromoFilter')).toBeVisible();
+
+  // Create a promotion, then find it through search rather than by row order.
+  await page.locator('#addPromoBtn').click();
+  await page.locator('#promoCode').fill('PAGESEARCH');
+  await page.locator('#promoPercent').fill('12');
+  await page.locator('#adminPromoForm button[type="submit"]').click();
+  await page.locator('#adminPromoSearch').fill('pagesearch');
+  await expect(page.locator('#adminPromoBody tr')).toHaveCount(1);
+  await expect(page.locator('#adminPromoBody')).toContainText('PAGESEARCH');
+
+  // Disabling it moves it out of the "Active" filter and into "Disabled".
+  await page.locator('#adminPromoSearch').fill('');
+  await page.locator('#adminPromoBody tr').filter({ hasText: 'PAGESEARCH' }).getByRole('button', { name: 'Disable' }).click();
+  await page.locator('[data-promo-filter="active"]').click();
+  await expect(page.locator('#adminPromoBody')).not.toContainText('PAGESEARCH');
+  await page.locator('[data-promo-filter="disabled"]').click();
+  await expect(page.locator('#adminPromoBody')).toContainText('PAGESEARCH');
+  await expect(page.locator('[data-promo-filter="disabled"]')).toHaveAttribute('aria-pressed', 'true');
+
+  // A filter with nothing in it explains itself and hides the pager.
+  await page.locator('[data-promo-filter="expired"]').click();
+  await expect(page.locator('#adminPromoBody')).toContainText('No expired promotions');
+  await expect(page.locator('#adminPromoPager')).toBeHidden();
+  await page.locator('[data-promo-filter="all"]').click();
+});
