@@ -1,5 +1,5 @@
 {
-  "name": "v8-storefront",
+  "name": "greencart-storefront",
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 8000 --bind 0.0.0.0",

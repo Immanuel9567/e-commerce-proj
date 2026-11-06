@@ -77,6 +77,18 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'a save under the old brand key is ignored',
+    file: 'js/store.js',
+    from: `      const legacyKey = LEGACY_STORE_STATE_KEYS.find(key => this.readRaw(key) !== null);`,
+    to: `      const legacyKey = undefined;`
+  },
+  {
+    name: 'a legacy save overrides the current one',
+    file: 'js/store.js',
+    from: `    if (this.readRaw(STORE_STATE_KEY) === null) {`,
+    to: `    if (true) {`
+  },
+  {
     name: 'empty rows hard-code five columns, whatever the table has',
     file: 'js/app.js',
     from: `    const columns = body.closest('table').querySelectorAll('thead th').length;`,

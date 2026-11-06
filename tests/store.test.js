@@ -368,3 +368,35 @@ test('admin list search matches the fields an operator would type', () => {
   assert.equal(matchesQuery('ada@example.com', 'Ada Customer', 'ada@example.com'), true);
   assert.equal(matchesQuery('delivered', 'REF-1', 'Delivered'), true);
 });
+
+test('a save written under the old brand key is adopted, not discarded', () => {
+  const legacy = {
+    products: seed,
+    cart: [{ id: 'one', quantity: 2, selectedSize: 'Small', selectedColor: '#111111' }],
+    orders: [{ reference: 'LEGACY-1', total: 200, status: 'processing', createdAt: '2026-10-01T10:00:00.000Z', customer: { name: 'Ada', email: 'ada@example.com', address: '1 St', city: 'Ibadan' }, items: [] }],
+    wishlist: ['two']
+  };
+  const storage = new MemoryStorage({ v8_store_v1: JSON.stringify(legacy) });
+  const store = new Store(seed, storage, fixedDate);
+
+  assert.equal(store.migratedFrom, 'v8_store_v1', 'it reports which key it adopted');
+  assert.equal(store.cart.length, 1, 'the cart survives the rebrand');
+  assert.equal(store.cart[0].quantity, 2);
+  assert.equal(store.orders.length, 1, 'order history survives');
+  assert.deepEqual(store.state.wishlist, ['two'], 'saved items survive');
+
+  // Copied to the new key, leaving the old value intact as a fallback.
+  assert.ok(storage.getItem(STORE_STATE_KEY), 'the new key is written');
+  assert.ok(storage.getItem('v8_store_v1'), 'the old key is not destroyed');
+
+  // A fresh visitor has nothing to migrate.
+  assert.equal(makeStore().migratedFrom, undefined);
+
+  // Once the new key exists it wins; a stale legacy value cannot override it.
+  const both = new MemoryStorage({
+    v8_store_v1: JSON.stringify({ cart: [{ id: 'one', quantity: 9 }] }),
+    [STORE_STATE_KEY]: JSON.stringify({ cart: [], orders: [], products: seed })
+  });
+  const prefersNew = new Store(seed, both, fixedDate);
+  assert.equal(prefersNew.cart.length, 0, 'the current key wins over the legacy one');
+});

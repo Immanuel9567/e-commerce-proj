@@ -293,7 +293,7 @@ test('a detail-page purchase retains the chosen variant through checkout and ret
   await page.locator('#checkoutEmail').fill('ada@example.com');
   await page.locator('#confirmPayBtn').click();
   const reference = (await page.locator('#orderTrackingNum').textContent()).trim();
-  const item = await page.evaluate(() => JSON.parse(localStorage.getItem('v8_store_v1')).orders[0].items[0]);
+  const item = await page.evaluate(() => JSON.parse(localStorage.getItem('greencart_store_v1')).orders[0].items[0]);
   expect(item.selectedSize).toBe('US 9');
   expect(item.selectedColor).toBe('#f8fafc');
   await page.locator('#continueShoppingBtn').click();

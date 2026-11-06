@@ -2,7 +2,33 @@
 
 This file records meaningful repository changes and the checks that support them. See [agent.md](agent.md) for the required entry and handoff rules. Dates use the owner's local date; `Unreleased` means the work is not yet part of a named release.
 
-## Unreleased — 2026-11-05
+## Unreleased — 2026-11-06
+
+### Changed — the brand is now GreenCart
+
+- Renamed from **V8's** to **GreenCart** ahead of the domain purchase, so the address and every page agree. Seven places in `index.html` (title, brand logo and its `G` badge, aria-label, admin header kicker, footer, copyright), four `document.title` assignments in `js/app.js`, the `package.json` name, the README title and the mind map.
+- The visible logo is `G GreenCart.` — the existing `.brand-dot` accent is kept, so the mark changes without changing the page's visual language.
+
+### Changed — the storage key moved with the brand, without losing anyone's data
+
+- `v8_store_v1` → **`greencart_store_v1`**. On boot, if the new key has never been written, the store copies any value found under a legacy key across and records `migratedFrom`. Carts, saved items and order history survive the rebrand.
+- The old key is **not deleted**, so a rollback is possible.
+- Once the new key exists it always wins: a stale legacy value cannot override current data. Both directions are covered by tests.
+- `readRaw()` was added to `Store` so "never written" can be told apart from "written but unparseable" — the same distinction the unmerged recovery work needed.
+
+### Changed — CI housekeeping
+
+- **`ci/tests.yml` deleted.** The workflow is active at `.github/workflows/tests.yml` and the two copies were verified byte-identical first; keeping both risked someone editing the reference and seeing no effect.
+- `ci/README.md` rewritten. It previously said the workflow was switched off and gave instructions to activate it — both now false. It documents the real state, the triggers, what runs, how to make the check **required**, and how to read a failure.
+- **CI is active but not enforced.** No branch ruleset exists, so a red run does not block a merge, and `main` deploys to production on every push. Recorded in the README and the go-live runbook rather than left implied.
+- Added `docs/GO-LIVE-HOSTING.md`: the domain and hosting runbook, in GreenCart's name.
+
+### Verification — rebrand
+
+- `npm test`: **42/42**. One new store test covers migration in both directions — legacy adopted when the new key is absent, current key preferred when both exist — and confirms the old key is left intact.
+- Playwright: **43/43**. The one test that read `v8_store_v1` directly was updated to the new key, which is the only place a hardcoded key could have silently stopped asserting anything.
+- `npm run test:mutation`: **24/24 caught**, including two new mutations — ignoring a legacy save, and letting a stale legacy save override current data.
+- Rendered check in Chromium: title, logo, aria-label, footer and admin kicker all read GreenCart.
 
 ### Changed — the five admin lists share one renderer
 

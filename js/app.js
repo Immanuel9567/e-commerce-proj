@@ -226,10 +226,10 @@ function renderProductPage(productId) {
   const focusSize = focused && focused.dataset.size;
   const product = AppStore.products.find(item => item.id === productId);
   if (product && product.archived) {
-    document.title = "No longer available | V8's";
+    document.title = "No longer available | GreenCart";
     DOM.productPageContent.innerHTML = `<div class="product-missing"><div class="section-kicker">THE COLLECTION</div><h1 id="productPageTitle" tabindex="-1">No longer available<span class="brand-dot">.</span></h1><p>${escapeHtml(product.title)} has been retired and is not for sale. Past orders that included it keep their details in your account.</p><a class="nm-btn" href="./#catalogSection" data-storefront-link="shop">Back to the collection</a></div>`;
   } else if (!product) {
-    document.title = "Product not found | V8's";
+    document.title = "Product not found | GreenCart";
     DOM.productPageContent.innerHTML = `<div class="product-missing"><div class="section-kicker">THE COLLECTION</div><h1 id="productPageTitle" tabindex="-1">Product not found<span class="brand-dot">.</span></h1><p>This item may no longer be available on this device.</p></div>`;
   } else {
     if (productSelection.id !== product.id) productSelection = { id: product.id, color: product.colors[0], size: product.sizes[0], quantity: 1 };
@@ -237,7 +237,7 @@ function renderProductPage(productId) {
     if (!product.sizes.includes(productSelection.size)) productSelection.size = product.sizes[0];
     const saved = AppStore.isWishlisted(product.id);
     const specs = Array.isArray(product.specs) ? product.specs.filter(spec => spec && spec.label != null && spec.value != null && String(spec.label).trim() && String(spec.value).trim()) : [];
-    document.title = `${product.title} | V8's`;
+    document.title = `${product.title} | GreenCart`;
     DOM.productPageContent.innerHTML = `<article class="product-detail-card">
       <div class="product-detail-img-well">${productImage(product, 'product-detail-img')}</div>
       <div class="product-detail-body">
@@ -267,7 +267,7 @@ function renderRoute() {
   DOM.productPage.hidden = !viewingProduct;
   $('brandLogo').setAttribute('href', viewingProduct ? './' : '#home');
   if (viewingProduct) renderProductPage(productRouteId());
-  else document.title = "V8's | Objects for everyday living";
+  else document.title = "GreenCart | Everyday essentials, considered";
   setActiveNav(viewingProduct || window.location.hash === '#catalogSection' ? 'shop' : 'home');
 }
 

@@ -1,4 +1,8 @@
-const STORE_STATE_KEY = 'v8_store_v1';
+const STORE_STATE_KEY = 'greencart_store_v1';
+// Keys written by the previous brand name. Read once on boot and copied to the
+// new key, so renaming the brand does not silently empty a returning visitor's
+// cart, saved items and order history.
+const LEGACY_STORE_STATE_KEYS = ['v8_store_v1'];
 const STORE_CATEGORIES = {
   audio: 'Audio',
   timepieces: 'Timepieces',
@@ -51,6 +55,17 @@ class Store {
     this.activeCategory = 'all';
     this.searchQuery = '';
     this.sortBy = 'featured';
+    // Adopt a legacy save if the new key has never been written.
+    if (this.readRaw(STORE_STATE_KEY) === null) {
+      const legacyKey = LEGACY_STORE_STATE_KEYS.find(key => this.readRaw(key) !== null);
+      if (legacyKey) {
+        const legacyValue = this.readRaw(legacyKey);
+        try {
+          this.storage.setItem(STORE_STATE_KEY, legacyValue);
+        } catch (_) { /* storage full: the in-memory read below still works */ }
+        this.migratedFrom = legacyKey;
+      }
+    }
     const saved = this.read(STORE_STATE_KEY, null);
     const source = saved && typeof saved === 'object' ? saved : {};
     const products = (Array.isArray(source.products) ? source.products : seedProducts).map(product => this.normalizeProduct(product));
@@ -73,6 +88,16 @@ class Store {
       return value ? JSON.parse(value) : fallback;
     } catch (_) {
       return fallback;
+    }
+  }
+
+  // The raw stored string, or null when nothing is stored. read() cannot tell a
+  // key that was never written from one that failed to parse; this can.
+  readRaw(key) {
+    try {
+      return this.storage.getItem(key);
+    } catch (_) {
+      return null;
     }
   }
 

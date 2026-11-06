@@ -1,4 +1,4 @@
-# V8's storefront
+# GreenCart storefront
 
 A static storefront with a locally persisted admin preview. Run it from the project directory:
 

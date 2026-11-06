@@ -33,6 +33,9 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-11-05 | Paging now announces the visible range through one persistent live region; the old `aria-live` sat inside the rebuilt pager and was verifiably destroyed on every page change. Mutation checks refuse to start from a dirty tree | `js/app.js`, `index.html`, `tests/` | Done — 37 unit/DOM tests, 43 browser tests, 20/20 mutations caught |
 | 2026-11-05 | The five admin lists now share one renderer; the empty row's column count comes from the table itself and empty messages are escaped once | `js/app.js`, `tests/` | Done — 41 unit/DOM tests, 43 browser tests, 22/22 mutations caught |
 
+| 2026-11-06 | Rebranded from V8's to GreenCart across the UI, page titles, package name and docs; storage key renamed with a one-way migration so carts and orders survive | `index.html`, `js/app.js`, `js/store.js`, `package.json`, `tests/` | Done — 42 unit/DOM tests, 43 browser tests, 24/24 mutations caught |
+| 2026-11-06 | CI activated at `.github/workflows/tests.yml` and its first run passed; duplicate `ci/tests.yml` removed and `ci/README.md` rewritten; hosting/domain runbook added | `.github/workflows/tests.yml`, `ci/README.md`, `docs/GO-LIVE-HOSTING.md` | Done — **not enforced**: needs a branch ruleset requiring the check |
+
 Deliberately **not** done yet, and still needing owner approval: the Supabase backend, authentication and roles, shared data, real payments and refunds, and server-side enforcement of the status and refund rules now modelled locally. The rules added on 2026-11-05 exist only in browser code; a real backend must re-implement and test them server-side in Phases 1–2.
 
 ## Decisions and approval gates
