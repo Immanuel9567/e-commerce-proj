@@ -85,7 +85,7 @@ test('checkout saves reference and status to account, inventory, analytics and c
   await page.locator('#confirmPayBtn').click();
   await expect(page.locator('#orderSuccessScreen')).toBeVisible();
   const reference = (await page.locator('#orderTrackingNum').textContent()).trim();
-  expect(reference).toMatch(/^AURA-\d{4}-/);
+  expect(reference).toMatch(/^GC-\d{4}-/);
   await expect(page.locator('#continueShoppingBtn')).toHaveText('Return to Home');
   await page.locator('#continueShoppingBtn').click();
   await page.locator('[data-tab="profile"]').click();

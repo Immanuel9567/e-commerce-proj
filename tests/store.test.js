@@ -87,9 +87,9 @@ test('checkout persists the same reference, order snapshots and inventory atomic
   const storage = new MemoryStorage();
   const store = makeStore(storage);
   store.addToCart('one', 2);
-  store.applyPromo('AURA15');
+  store.applyPromo('GC15');
   const order = store.placeOrder(details);
-  assert.match(order.reference, /^AURA-2026-/);
+  assert.match(order.reference, /^GC-2026-/);
   assert.equal(order.customer.email, 'ada@example.com');
   assert.equal(order.total, 170);
   assert.equal(store.products[0].stock, 1);
@@ -145,10 +145,10 @@ test('fixed vouchers and automatic sales choose the best active sale unless a co
   assert.equal(store.getCartTotals().promotion.code, 'AUTOSALE');
   assert.equal(store.getCartTotals().discount, 25);
   assert.equal(store.getCartTotals().total, 90);
-  store.applyPromo('AURA15');
-  assert.equal(store.getCartTotals().promotion.code, 'AURA15');
+  store.applyPromo('GC15');
+  assert.equal(store.getCartTotals().promotion.code, 'GC15');
   assert.equal(store.getCartTotals().discount, 15);
-  store.togglePromotion('AURA15');
+  store.togglePromotion('GC15');
   assert.equal(store.getCartTotals().promotion.code, 'AUTOSALE');
   store.addPromotion({ code: 'VOUCHER', type: 'amount', value: 150 });
   store.applyPromo('VOUCHER');
@@ -240,7 +240,7 @@ test('refunded orders cannot move status and require a delivered or shipped orde
 test('the refund rule keeps analytics and customers consistent for shipped orders', () => {
   const store = makeStore();
   store.addToCart('one', 2);
-  store.applyPromo('AURA15');
+  store.applyPromo('GC15');
   const order = store.placeOrder(details);
   assert.equal(order.total, 170);
   store.updateOrderStatus(order.reference, 'processing');

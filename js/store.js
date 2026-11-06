@@ -11,7 +11,7 @@ const STORE_CATEGORIES = {
   tech: 'Workspace & Tech'
 };
 const DEFAULT_PROMOTIONS = [
-  { code: 'AURA15', percent: 15, active: true, start: '', end: '' },
+  { code: 'GC15', percent: 15, active: true, start: '', end: '' },
   { code: 'MONO15', percent: 15, active: true, start: '', end: '' },
   { code: 'VIP25', percent: 25, active: true, start: '', end: '' }
 ];
@@ -396,7 +396,7 @@ class Store {
     const now = this.now();
     let reference;
     do {
-      reference = `AURA-${now.getFullYear()}-${this.uniqueId('order').slice(6).toUpperCase()}`;
+      reference = `GC-${now.getFullYear()}-${this.uniqueId('order').slice(6).toUpperCase()}`;
     } while (this.orders.some(order => order.reference === reference));
     const order = {
       reference,

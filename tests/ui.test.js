@@ -111,7 +111,7 @@ test('a checkout with a half-cent promotion discount shows the rounded total', (
     // Force a 4.10 subtotal so 15% lands exactly on half a cent (0.615 -> 0.62).
     store.saveProduct({ id: 'aura-14', title: 'Minimalist Matte Thermal Flask', category: 'living', price: 4.10, stock: 5, description: 'Rounding probe' });
     store.addToCart('aura-14');
-    store.applyPromo('AURA15');
+    store.applyPromo('GC15');
     window.renderCartDrawer();
     assert.match(document.getElementById('cartDiscount').textContent.trim(), /^−\$0\.62/);
     const totals = store.getCartTotals();
