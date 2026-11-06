@@ -52,6 +52,21 @@ class Store {
     this.searchQuery = '';
     this.sortBy = 'featured';
     const saved = this.read(STORE_STATE_KEY, null);
+    // A stored value that exists but does not parse (or is not an object) used
+    // to be discarded silently: the shop quietly reverted to seed data and the
+    // customer's orders were gone with no explanation. Record it so the UI can
+    // say so instead of pretending nothing happened.
+    const raw = this.readRaw(STORE_STATE_KEY);
+    this.recovery = null;
+    if (raw !== null) {
+      const unreadable = saved === null || typeof saved !== 'object';
+      if (unreadable) {
+        this.recovery = {
+          reason: saved === null ? 'unreadable' : 'unexpected shape',
+          bytes: raw.length
+        };
+      }
+    }
     const source = saved && typeof saved === 'object' ? saved : {};
     const products = (Array.isArray(source.products) ? source.products : seedProducts).map(product => this.normalizeProduct(product));
     const cart = Array.isArray(source.cart) ? source.cart : this.read('aura_cart', []);
@@ -73,6 +88,18 @@ class Store {
       return value ? JSON.parse(value) : fallback;
     } catch (_) {
       return fallback;
+    }
+  }
+
+  // The raw stored string, or null when there is nothing stored. Kept separate
+  // from read() so a failed parse is distinguishable from a key that was never
+  // written, which is the difference between "first visit" and "your data is
+  // unreadable".
+  readRaw(key) {
+    try {
+      return this.storage.getItem(key);
+    } catch (_) {
+      return null;
     }
   }
 

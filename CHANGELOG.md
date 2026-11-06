@@ -4,6 +4,24 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Fixed — unreadable saved data vanished without a word
+
+- If the stored value was corrupt or the wrong shape, the shop **silently** reverted to seed data. Reproduced: with one real order saved, corrupting `v8_store_v1` and reloading left **0 orders**, no page error, and nothing anywhere on screen to suggest anything was wrong. The stored bytes were also still present, so the customer's data was recoverable but the UI implied it had never existed.
+- `Store` now records `recovery = { reason, bytes }` when a key exists but does not parse, or parses to something that is not an object. A key that was never written stays silent, because a first visit is not a problem — the distinction is the whole point, and `readRaw()` exists so it can be made.
+- The admin shows a `role="alert"` banner above the panels: *"Saved data could not be read. The catalogue and orders below are the built-in defaults, not your saved data (20 bytes stored). Nothing has been overwritten yet: saving any change will replace it."* It states the byte count so the claim is checkable, and it does **not** claim the data was deleted, because it wasn't.
+- Dismissing hides the banner for the session and says the stored data was left untouched. It is not "cleared", because nothing was cleared.
+
+### On loading states, deliberately not built
+
+- The Phase 3 table item asks for loading and error states. Error states now exist where failure is genuinely possible. **Loading states were not added**, because local storage reads are synchronous: there is no interval to show a spinner in, and inventing an artificial delay to make a skeleton visible would be theatre that also makes the app slower. The gap is recorded in `ROADMAP.md` as waiting for the Phase 2 APIs rather than ticked off.
+
+### Verification — recovery state
+
+- `npm test`: **43/43**. A store test covers all four cases — never written (silent), unparseable, wrong shape, and valid — and a DOM test covers the banner's wording, `role="alert"`, the byte count, dismissal, and that a re-render does not resurrect a dismissed banner.
+- Playwright: **44/44**, with a browser test that saves a real order, corrupts the real storage key, reloads, confirms the order really is gone, checks the banner, confirms the stored bytes are still intact, dismisses it, and then confirms a fresh profile shows no banner.
+- `npm run test:mutation`: **24/24 caught**. Two new mutations target this: discarding unreadable data silently, and mistaking a first visit for unreadable data.
+- My first investigation of this used the wrong storage key (`aura_store_v1` rather than `v8_store_v1`) and produced a misleading result; it was re-run against the real key before anything was built on it.
+
 ### Changed — the five admin lists share one renderer
 
 - Products, Inventory, Orders, Customers and Promotions each repeated the same six steps: sync the filter pills, remember the matching items, paginate, choose an empty message, count columns for the empty row, and draw the pager. That is now `renderAdminList({ state, bodyId, pagerId, items, row, emptyMessage, label, spokenLabel, afterRender })` plus `syncFilterPills(selector, datasetKey, current)`. Each list supplies only its filter and its row markup.

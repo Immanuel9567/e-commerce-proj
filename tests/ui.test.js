@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus; window.announceListChange = announceListChange; window.renderAdminList = renderAdminList;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus; window.announceListChange = announceListChange; window.renderAdminList = renderAdminList; window.renderAdminRecovery = renderAdminRecovery;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -673,6 +673,42 @@ test('the helper renders the rows belonging to the current page, not always the 
     assert.equal(shown.length, 5);
     assert.equal(shown[0], 'Item 21');
     assert.match(document.getElementById('adminProductPager').textContent, /Showing 21.25 of 25/);
+  } finally {
+    page.close();
+  }
+});
+
+test('the admin says so when saved data could not be read', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    document.querySelector('[data-tab="admin"]').click();
+    const banner = document.getElementById('adminRecovery');
+
+    // A healthy store is quiet.
+    assert.equal(window.AppStore.recovery, null);
+    window.renderAdminPanel ? window.renderAdminPanel() : window.renderAdminRecovery();
+    assert.equal(banner.hidden, true, 'no banner when saved data read fine');
+
+    // Simulate what a corrupt saved value produces at boot.
+    window.AppStore.recovery = { reason: 'unreadable', bytes: 20 };
+    window.renderAdminRecovery();
+    assert.equal(banner.hidden, false, 'the banner appears');
+    assert.equal(banner.getAttribute('role'), 'alert', 'it is announced as an alert');
+    const text = banner.textContent;
+    assert.match(text, /could not be read/i);
+    assert.match(text, /built-in defaults, not your saved data/i, 'it says the data below is not theirs');
+    assert.match(text, /20 bytes/, 'it reports how much is stored, so the size is checkable');
+    assert.match(text, /Nothing has been overwritten/i, 'it says the data is still there, which is true');
+
+    // Dismissing hides it for this view without touching the stored value.
+    document.getElementById('adminRecoveryDismiss').click();
+    assert.equal(banner.hidden, true, 'dismiss hides the banner');
+    assert.equal(window.AppStore.recovery.dismissed, true, 'and records the dismissal');
+
+    // Rendering again must not bring it back.
+    window.renderAdminRecovery();
+    assert.equal(banner.hidden, true, 'a re-render does not resurrect a dismissed banner');
   } finally {
     page.close();
   }
