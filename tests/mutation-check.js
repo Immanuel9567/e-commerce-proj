@@ -77,6 +77,18 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'empty rows hard-code five columns, whatever the table has',
+    file: 'js/app.js',
+    from: `    const columns = body.closest('table').querySelectorAll('thead th').length;`,
+    to: `    const columns = 5;`
+  },
+  {
+    name: 'a shrunk list keeps its old page instead of clamping back into range',
+    file: 'js/app.js',
+    from: `  const { items: pageItems, total } = paginate(items, state.page, ADMIN_PAGE_SIZE);`,
+    to: `  const { items: pageItems, total } = { items: items.slice(0, ADMIN_PAGE_SIZE), total: items.length };`
+  },
+  {
     name: 'page changes are not announced to assistive tech',
     file: 'js/app.js',
     from: `  announceListChange(state.key, total === 0 ? '' : summary);`,

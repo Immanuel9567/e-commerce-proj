@@ -50,7 +50,7 @@ This was verified with Chromium 153 in a Debian 12 sandbox; it does not replace 
 
 > **Maintainer task (about one minute, no setup):** CI is written but switched off, because the connection that pushes this repo cannot write to `.github/workflows/`. To turn it on, copy the contents of [`ci/tests.yml`](ci/tests.yml) into a new file at `.github/workflows/tests.yml` using GitHub's **Add file → Create new file** button. Step-by-step instructions are in [`ci/README.md`](ci/README.md). Until then, run both suites locally before opening a pull request.
 
-`npm run test:mutation` checks the tests themselves (20 rules today, including paging, search, status filters, pager focus and screen-reader announcements). It refuses to start if `js/store.js` or `js/app.js` has uncommitted changes, since those may be a leftover mutation; pass `ALLOW_DIRTY=1` for deliberate work in progress: it breaks one business rule at a time and reports whether the suite notices. A rule whose mutation leaves every test green is reported as **SURVIVED**, meaning it is not genuinely covered. Run it after adding or changing a guarded rule.
+`npm run test:mutation` checks the tests themselves (22 rules today, including paging, search, status filters, pager focus and screen-reader announcements). It refuses to start if `js/store.js` or `js/app.js` has uncommitted changes, since those may be a leftover mutation; pass `ALLOW_DIRTY=1` for deliberate work in progress: it breaks one business rule at a time and reports whether the suite notices. A rule whose mutation leaves every test green is reported as **SURVIVED**, meaning it is not genuinely covered. Run it after adding or changing a guarded rule.
 
 `npm test` runs two suites and needs no browser:
 
