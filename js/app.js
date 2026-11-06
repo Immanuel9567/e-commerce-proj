@@ -383,6 +383,37 @@ function renderAdminPanel() {
   renderAdminDiscounts();
 }
 
+// The five admin lists differ only in how they filter and how they draw a row.
+// Everything else - syncing the filter pills, remembering the matching items,
+// paginating, choosing the empty message, counting columns for it, and drawing
+// the pager - is the same, so it lives here once.
+function syncFilterPills(selector, datasetKey, current) {
+  document.querySelectorAll(selector).forEach(pill => {
+    const active = pill.dataset[datasetKey] === current;
+    pill.classList.toggle('active', active);
+    pill.setAttribute('aria-pressed', String(active));
+  });
+}
+
+// `emptyMessage` must be plain text: it is escaped here, once, so callers do
+// not have to remember whether they escaped their own query already.
+function renderAdminList({ state, bodyId, pagerId, items, row, emptyMessage, label, spokenLabel, syncPills, afterRender }) {
+  if (syncPills) syncPills();
+  state.items = items;
+  const { items: pageItems, total } = paginate(items, state.page, ADMIN_PAGE_SIZE);
+  const body = $(bodyId);
+  if (total) {
+    body.innerHTML = pageItems.map(row).join('');
+  } else {
+    // Read the column count from the table itself rather than hard-coding it
+    // per list, where it silently drifts when a column is added.
+    const columns = body.closest('table').querySelectorAll('thead th').length;
+    body.innerHTML = `<tr><td colspan="${columns}" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
+  }
+  renderPager($(pagerId), state, label, spokenLabel);
+  if (afterRender) afterRender();
+}
+
 function renderPager(container, state, label, spokenList = label) {
   if (!container) return;
   // Any re-render replaces these buttons, and the browser then drops focus to
@@ -471,27 +502,28 @@ function productActions(product) {
 }
 
 function renderAdminProducts() {
-  document.querySelectorAll('[data-product-filter]').forEach(pill => {
-    const active = pill.dataset.productFilter === adminProductFilter;
-    pill.classList.toggle('active', active);
-    pill.setAttribute('aria-pressed', String(active));
-  });
   const state = adminListState.products;
   const all = AppStore.products;
   const matching = all.filter(product => adminProductFilter === 'all' ? true : adminProductFilter === 'archived' ? product.archived : !product.archived)
     .filter(product => matchesQuery(state.query, product.title, product.categoryName, (product.tags || []).join(' ')));
-  state.items = matching;
-  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
-  const emptyMessage = all.length === 0
-    ? 'No products yet.'
-    : state.query ? `No products match \u201c${state.query}\u201d.` : adminProductFilter === 'archived' ? 'No archived products.' : 'No active products yet.';
-  $('adminProductBody').innerHTML = total ? items.map(product => `<tr${product.archived ? ' class="admin-row-archived"' : ''}>
+  renderAdminList({
+    state,
+    bodyId: 'adminProductBody',
+    pagerId: 'adminProductPager',
+    items: matching,
+    label: 'products',
+    spokenLabel: 'products in the catalogue',
+    syncPills: () => syncFilterPills('[data-product-filter]', 'productFilter', adminProductFilter),
+    row: product => `<tr${product.archived ? ' class="admin-row-archived"' : ''}>
     <td data-label="Product"><div><strong>${escapeHtml(product.title)}</strong><span class="admin-subline">${escapeHtml((product.tags || []).join(' · ') || product.id)}</span></div></td>
     <td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Price">${money(product.price)}</td><td data-label="Stock">${product.stock}</td>
     <td data-label="Status"><span class="admin-status-badge ${product.archived ? 'status-archived' : 'status-ok'}">${product.archived ? 'Archived' : 'Active'}</span></td>
     <td data-label="Actions">${productActions(product)}</td>
-  </tr>`).join('') : `<tr><td colspan="6" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
-  renderPager($('adminProductPager'), state, 'products', 'products in the catalogue');
+  </tr>`,
+    emptyMessage: all.length === 0
+      ? 'No products yet.'
+      : state.query ? `No products match \u201c${state.query}\u201d.` : adminProductFilter === 'archived' ? 'No archived products.' : 'No active products yet.'
+  });
 }
 
 function orderStatusControl(order) {
@@ -508,23 +540,20 @@ function refundAction(order) {
 }
 
 function renderAdminOrders() {
-  document.querySelectorAll('[data-order-filter]').forEach(pill => {
-    const active = pill.dataset.orderFilter === adminOrderFilter;
-    pill.classList.toggle('active', active);
-    pill.setAttribute('aria-pressed', String(active));
-  });
   const state = adminListState.orders;
   const matching = AppStore.orders
     .filter(order => adminOrderFilter === 'all' || order.status === adminOrderFilter)
     .filter(order => matchesQuery(state.query, order.reference, order.customer.name, order.customer.email, titleCase(order.status), order.items.map(item => item.title).join(' ')));
-  state.items = matching;
-  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
-  const emptyMessage = AppStore.orders.length === 0
-    ? 'No orders yet.'
-    : state.query ? `No orders match \u201c${state.query}\u201d.` : `No ${adminOrderFilter} orders.`;
-  $('adminOrderBody').innerHTML = total ? items.map(order => {
-    const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
-    return `<tr>
+  renderAdminList({
+    state,
+    bodyId: 'adminOrderBody',
+    pagerId: 'adminOrderPager',
+    items: matching,
+    label: 'orders',
+    syncPills: () => syncFilterPills('[data-order-filter]', 'orderFilter', adminOrderFilter),
+    row: order => {
+      const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
+      return `<tr>
       <td data-label="Reference"><div><strong>${escapeHtml(order.reference)}</strong><span class="admin-subline">${escapeHtml(formatDate(order.createdAt))}</span></div></td>
       <td data-label="Customer"><div><strong>${escapeHtml(order.customer.name)}</strong><span class="admin-subline">${escapeHtml(order.customer.email)}</span></div></td>
       <td data-label="Items"><details class="order-items-details"><summary>${count} ${count === 1 ? 'item' : 'items'}</summary>${order.items.map(item => `<span>${escapeHtml(item.title)} × ${item.quantity}</span>`).join('')}</details></td>
@@ -532,10 +561,15 @@ function renderAdminOrders() {
       <td data-label="Status">${orderStatusControl(order)}</td>
       <td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="order-details" data-reference="${escapeHtml(order.reference)}">View details</button>${refundAction(order)}</div></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="6" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
-  renderPager($('adminOrderPager'), state, 'orders');
-  const details = $('orderDetails');
-  if (!details.hidden && details.dataset.reference) renderOrderDetails(details.dataset.reference);
+    },
+    emptyMessage: AppStore.orders.length === 0
+      ? 'No orders yet.'
+      : state.query ? `No orders match \u201c${state.query}\u201d.` : `No ${adminOrderFilter} orders.`,
+    afterRender: () => {
+      const details = $('orderDetails');
+      if (!details.hidden && details.dataset.reference) renderOrderDetails(details.dataset.reference);
+    }
+  });
 }
 
 function renderOrderDetails(reference) {
@@ -554,28 +588,29 @@ function renderAdminInventory() {
   const low = AppStore.availableProducts.filter(product => product.stock > 0 && product.stock < 5).length;
   const out = AppStore.availableProducts.filter(product => product.stock === 0).length;
   $('inventorySummary').innerHTML = `<strong>${low + out}</strong><span>${low + out === 1 ? 'product needs' : 'products need'} attention</span><span class="inventory-summary-detail">${low} low stock · ${out} out of stock</span>`;
-  document.querySelectorAll('[data-inventory-filter]').forEach(pill => {
-    const active = pill.dataset.inventoryFilter === adminInventoryFilter;
-    pill.classList.toggle('active', active);
-    pill.setAttribute('aria-pressed', String(active));
-  });
   const state = adminListState.inventory;
   const matching = AppStore.availableProducts
     .filter(product => adminInventoryFilter === 'all'
       ? true
       : adminInventoryFilter === 'out' ? product.stock === 0 : product.stock > 0 && product.stock < 5)
     .filter(product => matchesQuery(state.query, product.title, product.categoryName));
-  state.items = matching;
-  const { items, total } = paginate(matching, state.page, ADMIN_PAGE_SIZE);
-  const emptyMessage = AppStore.availableProducts.length === 0
-    ? 'No products yet.'
-    : state.query ? `No products match \u201c${state.query}\u201d.` : adminInventoryFilter === 'out' ? 'Nothing is out of stock.' : 'Everything is above the low-stock threshold.';
-  $('adminInventoryBody').innerHTML = total ? items.map(product => {
-    const status = product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'ok';
-    const label = status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'In stock';
-    return `<tr><td data-label="Product"><strong>${escapeHtml(product.title)}</strong></td><td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Stock quantity"><input class="stock-input" type="number" min="0" step="1" value="${product.stock}" data-stock-id="${escapeHtml(product.id)}" aria-label="Stock for ${escapeHtml(product.title)}"></td><td data-label="Status"><span class="admin-status-badge status-${status}">${label}</span></td><td data-label="Update"><button type="button" class="admin-action-btn" data-admin-action="save-stock" data-id="${escapeHtml(product.id)}">Save stock</button></td></tr>`;
-  }).join('') : `<tr><td colspan="5" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
-  renderPager($('adminInventoryPager'), state, 'products', 'products in inventory');
+  renderAdminList({
+    state,
+    bodyId: 'adminInventoryBody',
+    pagerId: 'adminInventoryPager',
+    items: matching,
+    label: 'products',
+    spokenLabel: 'products in inventory',
+    syncPills: () => syncFilterPills('[data-inventory-filter]', 'inventoryFilter', adminInventoryFilter),
+    row: product => {
+      const status = product.stock === 0 ? 'out' : product.stock < 5 ? 'low' : 'ok';
+      const label = status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'In stock';
+      return `<tr><td data-label="Product"><strong>${escapeHtml(product.title)}</strong></td><td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Stock quantity"><input class="stock-input" type="number" min="0" step="1" value="${product.stock}" data-stock-id="${escapeHtml(product.id)}" aria-label="Stock for ${escapeHtml(product.title)}"></td><td data-label="Status"><span class="admin-status-badge status-${status}">${label}</span></td><td data-label="Update"><button type="button" class="admin-action-btn" data-admin-action="save-stock" data-id="${escapeHtml(product.id)}">Save stock</button></td></tr>`;
+    },
+    emptyMessage: AppStore.availableProducts.length === 0
+      ? 'No products yet.'
+      : state.query ? `No products match \u201c${state.query}\u201d.` : adminInventoryFilter === 'out' ? 'Nothing is out of stock.' : 'Everything is above the low-stock threshold.'
+  });
 }
 
 function renderAdminCustomers() {
@@ -585,18 +620,23 @@ function renderAdminCustomers() {
   // cities come from the customer's own orders. The search box promises it.
   const customerCities = customer => [...new Set(customer.orders.map(order => order.customer && order.customer.city).filter(Boolean))].join(' ');
   const customers = all.filter(customer => matchesQuery(state.query, customer.name, customer.email, customerCities(customer)));
-  state.items = customers;
-  const paged = paginate(customers, state.page, ADMIN_PAGE_SIZE);
-  state.page = paged.page;
-  $('adminCustomerBody').innerHTML = paged.items.length ? paged.items.map(customer => `<tr>
+  renderAdminList({
+    state,
+    bodyId: 'adminCustomerBody',
+    pagerId: 'adminCustomerPager',
+    items: customers,
+    label: 'customers',
+    row: customer => `<tr>
     <td data-label="Customer"><div><strong>${escapeHtml(customer.name)}</strong><span class="admin-subline">${escapeHtml(customer.email)}</span></div></td><td data-label="Orders">${customer.orders.length}</td><td data-label="Spent">${money(customer.spent)}</td>
     <td data-label="Account status"><select class="admin-status-select" data-admin-action="customer-status" data-email="${escapeHtml(customer.email)}" aria-label="Account status for ${escapeHtml(customer.name)}"><option value="active" ${customer.status === 'active' ? 'selected' : ''}>Active</option><option value="blocked" ${customer.status === 'blocked' ? 'selected' : ''}>Blocked</option></select></td>
-    <td data-label="History"><button type="button" class="admin-action-btn" data-admin-action="customer-history" data-email="${escapeHtml(customer.email)}">View history</button></td></tr>`).join('')
-    : `<tr><td colspan="5" class="table-empty">${all.length === 0 ? 'No customers yet.'
-      : state.query ? `No customers match \u201c${escapeHtml(state.query)}\u201d.` : 'No customers to show.'}</td></tr>`;
-  renderPager($('adminCustomerPager'), state, 'customers');
-  const history = $('customerHistory');
-  if (!history.hidden && history.dataset.email) renderCustomerHistory(history.dataset.email);
+    <td data-label="History"><button type="button" class="admin-action-btn" data-admin-action="customer-history" data-email="${escapeHtml(customer.email)}">View history</button></td></tr>`,
+    emptyMessage: all.length === 0 ? 'No customers yet.'
+      : state.query ? `No customers match \u201c${state.query}\u201d.` : 'No customers to show.',
+    afterRender: () => {
+      const history = $('customerHistory');
+      if (!history.hidden && history.dataset.email) renderCustomerHistory(history.dataset.email);
+    }
+  });
 }
 
 function renderCustomerHistory(email) {
@@ -625,29 +665,28 @@ function renderAdminAnalytics() {
 }
 
 function renderAdminDiscounts() {
-  document.querySelectorAll('[data-promo-filter]').forEach(pill => {
-    const active = pill.dataset.promoFilter === adminPromoFilter;
-    pill.classList.toggle('active', active);
-    pill.setAttribute('aria-pressed', String(active));
-  });
   const state = adminListState.promotions;
   const all = AppStore.promotions;
   const status = promo => AppStore.promotionStatus(promo);
   const promotions = all.filter(promo => (adminPromoFilter === 'all' || status(promo) === adminPromoFilter)
     && matchesQuery(state.query, promo.code, promo.type === 'amount' ? `${money(promo.amount)} off` : `${promo.percent}% off`, status(promo)));
-  state.items = promotions;
-  const paged = paginate(promotions, state.page, ADMIN_PAGE_SIZE);
-  state.page = paged.page;
-  $('adminPromoBody').innerHTML = paged.items.length ? paged.items.map(promo => {
-    const status = AppStore.promotionStatus(promo);
-    const schedule = promo.start || promo.end ? `${promo.start || 'Any time'} – ${promo.end || 'No end date'}` : 'Always';
-    const discount = promo.type === 'amount' ? `${money(promo.amount)} off` : `${promo.percent}% off`;
-    return `<tr><td data-label="Code"><div><strong>${escapeHtml(promo.code)}</strong>${promo.automatic ? '<span class="admin-subline">Automatic sale</span>' : ''}</div></td><td data-label="Discount">${escapeHtml(discount)}</td><td data-label="Schedule">${escapeHtml(schedule)}</td><td data-label="Status"><span class="admin-status-badge status-${status === 'active' ? 'ok' : status}">${escapeHtml(titleCase(status))}</span></td><td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="toggle-promo" data-code="${escapeHtml(promo.code)}">${promo.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-action-btn danger" data-admin-action="delete-promo" data-code="${escapeHtml(promo.code)}">Delete</button></div></td></tr>`;
-  }).join('')
-    : `<tr><td colspan="5" class="table-empty">${all.length === 0 ? 'No promotions yet.'
-      : state.query ? `No promotions match \u201c${escapeHtml(state.query)}\u201d.`
-        : adminPromoFilter === 'active' ? 'No promotions are active right now.' : `No ${escapeHtml(adminPromoFilter)} promotions.`}</td></tr>`;
-  renderPager($('adminPromoPager'), state, 'promotions');
+  renderAdminList({
+    state,
+    bodyId: 'adminPromoBody',
+    pagerId: 'adminPromoPager',
+    items: promotions,
+    label: 'promotions',
+    syncPills: () => syncFilterPills('[data-promo-filter]', 'promoFilter', adminPromoFilter),
+    row: promo => {
+      const status = AppStore.promotionStatus(promo);
+      const schedule = promo.start || promo.end ? `${promo.start || 'Any time'} – ${promo.end || 'No end date'}` : 'Always';
+      const discount = promo.type === 'amount' ? `${money(promo.amount)} off` : `${promo.percent}% off`;
+      return `<tr><td data-label="Code"><div><strong>${escapeHtml(promo.code)}</strong>${promo.automatic ? '<span class="admin-subline">Automatic sale</span>' : ''}</div></td><td data-label="Discount">${escapeHtml(discount)}</td><td data-label="Schedule">${escapeHtml(schedule)}</td><td data-label="Status"><span class="admin-status-badge status-${status === 'active' ? 'ok' : status}">${escapeHtml(titleCase(status))}</span></td><td data-label="Actions"><div class="admin-actions"><button type="button" class="admin-action-btn" data-admin-action="toggle-promo" data-code="${escapeHtml(promo.code)}">${promo.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-action-btn danger" data-admin-action="delete-promo" data-code="${escapeHtml(promo.code)}">Delete</button></div></td></tr>`;
+    },
+    emptyMessage: all.length === 0 ? 'No promotions yet.'
+      : state.query ? `No promotions match \u201c${state.query}\u201d.`
+        : adminPromoFilter === 'active' ? 'No promotions are active right now.' : `No ${adminPromoFilter} promotions.`
+  });
 }
 
 function openProductEditor(product) {

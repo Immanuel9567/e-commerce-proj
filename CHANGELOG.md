@@ -4,6 +4,20 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-05
 
+### Changed — the five admin lists share one renderer
+
+- Products, Inventory, Orders, Customers and Promotions each repeated the same six steps: sync the filter pills, remember the matching items, paginate, choose an empty message, count columns for the empty row, and draw the pager. That is now `renderAdminList({ state, bodyId, pagerId, items, row, emptyMessage, label, spokenLabel, afterRender })` plus `syncFilterPills(selector, datasetKey, current)`. Each list supplies only its filter and its row markup.
+- The empty row's `colspan` is now **read from the table's own `<thead>`** instead of being hard-coded per list, where it would silently drift when a column was added. Verified: products 6, orders 6, inventory 5, customers 5, promotions 5.
+- Empty messages are now **plain text escaped once** inside the helper. Previously one list escaped its query into the message and the caller escaped the result, which is easy to get wrong in both directions. A hostile query now renders literally with no elements created and no double-escaping (`<img src=x onerror=alert(1)>` came back as text, not markup).
+- Behaviour is unchanged: all five lists produce the same empty messages as before, checked side by side against the pre-refactor build. The `js/app.js` file grew slightly (1084 → 1123 lines) because the shared helper is documented, but the duplicated paging logic now appears once rather than five times.
+
+### Verification — shared admin list renderer
+
+- `npm test`: **41/41**. Three tests on the helper itself (column count derived per table, single escaping, page clamping) and one that pages a 25-item list through all three pages and asserts the **body contents** — items 1–10, then 11–20, then 21–25 — not just the pager text.
+- Playwright: **43/43**, unchanged, which is the point of a refactor: the same browser tests pass without modification.
+- `npm run test:mutation`: **22/22 caught**. Two new mutations target the helper: hard-coding the column count, and paginating the body incorrectly.
+- **A real gap was found by the new mutations.** "A shrunk list keeps its old page" initially **survived**, and it was not an equivalent mutant: with it the table body showed page one's rows while the pager correctly said "Page 2". No jsdom test checked body contents after paging, so the pager text alone looked right. The new page-contents test kills it.
+
 ### Added — page changes are now announced to screen readers
 
 - Paging changed the visible rows silently. The `aria-live` region sat **inside** the pager, whose `innerHTML` `renderPager` replaces on every render, so the live region was destroyed and recreated in the same task as its text change. Verified in Chromium by tagging the node: after one page change the original element no longer existed. A live region has to be in the DOM *before* its content changes to be announced reliably, so the existing markup was not working.

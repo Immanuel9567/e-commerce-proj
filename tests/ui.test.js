@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus; window.announceListChange = announceListChange;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus; window.announceListChange = announceListChange; window.renderAdminList = renderAdminList;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -538,6 +538,141 @@ test('a repeated announcement is re-sent rather than swallowed', () => {
     // A different message is written straight through.
     window.announceListChange('orders', 'Showing 1–10 of 10 orders, page 1 of 1');
     assert.equal(announcer.textContent, 'Showing 1–10 of 10 orders, page 1 of 1');
+  } finally {
+    page.close();
+  }
+});
+
+test('the shared admin list helper derives the empty row column count from the table', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const state = { key: 'products', query: '', page: 1, items: [] };
+    const rows = [];
+    window.renderAdminList({
+      state,
+      bodyId: 'adminProductBody',
+      pagerId: 'adminProductPager',
+      items: [],
+      label: 'products',
+      row: item => `<tr><td>${item}</td></tr>`,
+      emptyMessage: 'Nothing here.'
+    });
+    const cell = document.querySelector('#adminProductBody td[colspan]');
+    const headers = document.querySelector('#adminProductBody').closest('table').querySelectorAll('thead th').length;
+    assert.ok(cell, 'an empty row is rendered');
+    assert.equal(cell.getAttribute('colspan'), String(headers), 'the colspan matches the real column count');
+    assert.equal(cell.textContent, 'Nothing here.');
+    assert.equal(document.getElementById('adminProductPager').hidden, true, 'no pager when there is nothing to page');
+    assert.equal(rows.length, 0);
+
+    // A table with a genuinely different column count gets its own number, so
+    // the value is not hard-coded per list. (Orders also has 6, so it would
+    // prove nothing; inventory has 5.)
+    window.renderAdminList({
+      state: { key: 'inventory', query: '', page: 1, items: [] },
+      bodyId: 'adminInventoryBody',
+      pagerId: 'adminInventoryPager',
+      items: [],
+      label: 'products',
+      row: () => '',
+      emptyMessage: 'Nothing here.'
+    });
+    const inventoryCell = document.querySelector('#adminInventoryBody td[colspan]');
+    const inventoryHeaders = document.querySelector('#adminInventoryBody').closest('table').querySelectorAll('thead th').length;
+    assert.equal(inventoryCell.getAttribute('colspan'), String(inventoryHeaders));
+    assert.notEqual(inventoryCell.getAttribute('colspan'), cell.getAttribute('colspan'), 'inventory (5) differs from products (6)');
+  } finally {
+    page.close();
+  }
+});
+
+test('the shared helper escapes empty messages exactly once', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    window.renderAdminList({
+      state: { key: 'products', query: '', page: 1, items: [] },
+      bodyId: 'adminProductBody',
+      pagerId: 'adminProductPager',
+      items: [],
+      label: 'products',
+      row: () => '',
+      emptyMessage: 'No products match “<img src=x onerror=alert(1)>”.'
+    });
+    const cell = document.querySelector('#adminProductBody td[colspan]');
+    // Shown literally, and never parsed as markup.
+    assert.equal(cell.textContent, 'No products match “<img src=x onerror=alert(1)>”.');
+    assert.equal(cell.querySelector('img'), null, 'no element was created from the query');
+    // Escaped once, not twice: double-escaping would show &lt; instead of <.
+    assert.doesNotMatch(cell.textContent, /&lt;|&amp;lt;/);
+  } finally {
+    page.close();
+  }
+});
+
+test('the helper keeps the page in range when the list shrinks', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const state = { key: 'products', query: '', page: 3, items: [1, 2, 3, 4, 5] };
+    window.renderAdminList({
+      state,
+      bodyId: 'adminProductBody',
+      pagerId: 'adminProductPager',
+      items: [1, 2, 3, 4, 5],
+      label: 'products',
+      row: item => `<tr><td>${item}</td></tr>`,
+      emptyMessage: 'Nothing here.'
+    });
+    assert.equal(state.page, 1, 'an out-of-range page is clamped back into range');
+    assert.equal(document.querySelectorAll('#adminProductBody tr').length, 5);
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 1 of 1/);
+  } finally {
+    page.close();
+  }
+});
+
+test('the helper renders the rows belonging to the current page, not always the first page', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const items = Array.from({ length: 25 }, (_, index) => `Item ${index + 1}`);
+    const state = { key: 'products', query: '', page: 1, items };
+    const render = () => window.renderAdminList({
+      state,
+      bodyId: 'adminProductBody',
+      pagerId: 'adminProductPager',
+      items,
+      label: 'products',
+      row: item => `<tr><td>${item}</td></tr>`,
+      emptyMessage: 'Nothing here.'
+    });
+
+    render();
+    let shown = [...document.querySelectorAll('#adminProductBody tr')].map(row => row.textContent);
+    assert.equal(shown.length, 10);
+    assert.equal(shown[0], 'Item 1', 'page one starts at the first item');
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 1 of 3/);
+
+    // Page two must show items 11-20. Without this the body could keep showing
+    // page one while the pager claimed to be on page two, and the pager text
+    // alone would still look correct.
+    state.page = 2;
+    render();
+    shown = [...document.querySelectorAll('#adminProductBody tr')].map(row => row.textContent);
+    assert.equal(shown.length, 10);
+    assert.equal(shown[0], 'Item 11', 'page two starts at item 11');
+    assert.equal(shown[9], 'Item 20');
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 2 of 3/);
+
+    // And the last page is the remainder, not a full page.
+    state.page = 3;
+    render();
+    shown = [...document.querySelectorAll('#adminProductBody tr')].map(row => row.textContent);
+    assert.equal(shown.length, 5);
+    assert.equal(shown[0], 'Item 21');
+    assert.match(document.getElementById('adminProductPager').textContent, /Showing 21.25 of 25/);
   } finally {
     page.close();
   }
