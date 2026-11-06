@@ -306,6 +306,10 @@
           <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Code</th><th>Discount</th><th>Schedule</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminPromoBody"></tbody></table></div>
           <div class="admin-pager" id="adminPromoPager"></div>
         </section>
+        <!-- Lives outside every pager because renderPager rebuilds those containers.
+             A live region has to be in the DOM before its text changes, or the
+             change is not reliably announced. -->
+        <p class="visually-hidden" id="adminListAnnouncer" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
     </div>
   </div>

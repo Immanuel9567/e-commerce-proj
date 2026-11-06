@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus; window.announceListChange = announceListChange;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -480,6 +480,64 @@ test('focus survives a re-render caused by an action other than paging', () => {
     assert.match(pager.textContent, /Page 1 of 1/);
     assert.notEqual(document.activeElement, document.body, 'focus did not fall to the body');
     assert.equal(document.activeElement.className, 'admin-pager-status');
+  } finally {
+    page.close();
+  }
+});
+
+test('page changes are announced through one live region that is never replaced', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    document.querySelector('[data-tab="admin"]').click();
+    document.querySelector('[data-admin="products"]').click();
+    window.renderAdminProducts();
+    document.querySelector('[data-product-filter="all"]').click();
+
+    const announcer = document.getElementById('adminListAnnouncer');
+    assert.ok(announcer, 'the live region exists');
+    assert.equal(announcer.getAttribute('aria-live'), 'polite');
+    assert.equal(announcer.getAttribute('role'), 'status');
+    assert.equal(announcer.getAttribute('aria-atomic'), 'true');
+    assert.match(announcer.textContent, /Showing 1.10 of 14 products in the catalogue, page 1 of 2/);
+
+    // The region must survive re-renders: a live region created and changed in
+    // the same task is not announced. The pager containers are rebuilt, so the
+    // announcer has to live outside them.
+    announcer.dataset.probe = 'original';
+    document.querySelector('[data-page-target="products"][data-page-delta="1"]').click();
+    const same = document.getElementById('adminListAnnouncer');
+    assert.equal(same, announcer, 'it is the same node, not a rebuilt one');
+    assert.equal(same.dataset.probe, 'original', 'and it kept its state, so it was never replaced');
+    assert.match(same.textContent, /Showing 11.14 of 14 products in the catalogue, page 2 of 2/);
+
+    // No aria-live survives inside the pager, where it would be destroyed.
+    assert.equal(document.querySelectorAll('#adminProductPager [aria-live]').length, 0);
+
+    // Products and inventory both say "products" on screen; the announcement
+    // names the list so a tab switch is never a silently identical message.
+    document.querySelector('[data-admin="inventory"]').click();
+    document.querySelector('[data-inventory-filter="all"]').click();
+    assert.match(announcer.textContent, /products in inventory/);
+  } finally {
+    page.close();
+  }
+});
+
+test('a repeated announcement is re-sent rather than swallowed', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    const announcer = document.getElementById('adminListAnnouncer');
+    window.announceListChange('products', 'Showing 1–10 of 10 things, page 1 of 1');
+    assert.equal(announcer.textContent, 'Showing 1–10 of 10 things, page 1 of 1');
+    // Same text again: a live region that receives identical content usually
+    // stays silent, so the helper clears it first and writes it back.
+    window.announceListChange('products', 'Showing 1–10 of 10 things, page 1 of 1');
+    assert.equal(announcer.textContent, 'Showing 1–10 of 10 things, page 1 of 1');
+    // A different message is written straight through.
+    window.announceListChange('orders', 'Showing 1–10 of 10 orders, page 1 of 1');
+    assert.equal(announcer.textContent, 'Showing 1–10 of 10 orders, page 1 of 1');
   } finally {
     page.close();
   }

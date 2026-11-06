@@ -383,7 +383,7 @@ function renderAdminPanel() {
   renderAdminDiscounts();
 }
 
-function renderPager(container, state, label) {
+function renderPager(container, state, label, spokenList = label) {
   if (!container) return;
   // Any re-render replaces these buttons, and the browser then drops focus to
   // <body>. That happens on a pager click *and* on anything else that rerenders
@@ -401,17 +401,41 @@ function renderPager(container, state, label) {
   container.hidden = total === 0;
   if (total === 0) {
     container.innerHTML = '';
+    // Clear rather than leave the previous list's range sitting in the live
+    // region, where it would be read as if it described this list.
+    announceListChange(state.key, '');
     return;
   }
   // tabindex="-1" so focus can be parked here when the control the reader used
-  // becomes disabled, without adding another stop to the tab order.
-  container.innerHTML = `<p class="admin-pager-status" aria-live="polite" tabindex="-1">${`Showing ${first}\u2013${last} of ${total} ${escapeHtml(label)}`}</p>
+  // becomes disabled, without adding another stop to the tab order. No
+  // aria-live here: this element is destroyed on every render, so a live
+  // region on it is created and changed in the same task and is not announced.
+  // The persistent #adminListAnnouncer below does the announcing instead.
+  const summary = `Showing ${first}\u2013${last} of ${total} ${spokenList}, page ${page} of ${pageCount}`;
+  container.innerHTML = `<p class="admin-pager-status" tabindex="-1">${`Showing ${first}\u2013${last} of ${total} ${escapeHtml(label)}`}</p>
     <div class="admin-pager-controls">
       <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="-1" ${page <= 1 ? 'disabled' : ''}>Previous</button>
       <span class="admin-pager-page">Page ${page} of ${pageCount}</span>
       <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="1" ${page >= pageCount ? 'disabled' : ''}>Next</button>
     </div>`;
+  announceListChange(state.key, total === 0 ? '' : summary);
   if (hadFocusInside) restorePagerFocus(container, focusedDelta);
+}
+
+// Announce page and result changes through one region that is never replaced.
+// A repeated identical message is cleared first, because a live region that
+// receives the same text twice usually announces nothing the second time.
+let lastAnnouncement = '';
+function announceListChange(key, message) {
+  const announcer = $('adminListAnnouncer');
+  if (!announcer) return;
+  if (message === lastAnnouncement) {
+    announcer.textContent = '';
+    // Force a reflow so the identical text counts as a fresh change.
+    void announcer.offsetWidth;
+  }
+  announcer.textContent = message;
+  lastAnnouncement = message;
 }
 
 // Prefer the arrow the reader was using; if it is now disabled (end of list, or
@@ -467,7 +491,7 @@ function renderAdminProducts() {
     <td data-label="Status"><span class="admin-status-badge ${product.archived ? 'status-archived' : 'status-ok'}">${product.archived ? 'Archived' : 'Active'}</span></td>
     <td data-label="Actions">${productActions(product)}</td>
   </tr>`).join('') : `<tr><td colspan="6" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
-  renderPager($('adminProductPager'), state, 'products');
+  renderPager($('adminProductPager'), state, 'products', 'products in the catalogue');
 }
 
 function orderStatusControl(order) {
@@ -551,7 +575,7 @@ function renderAdminInventory() {
     const label = status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'In stock';
     return `<tr><td data-label="Product"><strong>${escapeHtml(product.title)}</strong></td><td data-label="Category">${escapeHtml(product.categoryName)}</td><td data-label="Stock quantity"><input class="stock-input" type="number" min="0" step="1" value="${product.stock}" data-stock-id="${escapeHtml(product.id)}" aria-label="Stock for ${escapeHtml(product.title)}"></td><td data-label="Status"><span class="admin-status-badge status-${status}">${label}</span></td><td data-label="Update"><button type="button" class="admin-action-btn" data-admin-action="save-stock" data-id="${escapeHtml(product.id)}">Save stock</button></td></tr>`;
   }).join('') : `<tr><td colspan="5" class="table-empty">${escapeHtml(emptyMessage)}</td></tr>`;
-  renderPager($('adminInventoryPager'), state, 'products');
+  renderPager($('adminInventoryPager'), state, 'products', 'products in inventory');
 }
 
 function renderAdminCustomers() {
@@ -872,6 +896,12 @@ function initEventListeners() {
   document.querySelectorAll('.admin-tab').forEach(tab => tab.addEventListener('click', () => {
     document.querySelectorAll('.admin-tab').forEach(item => { item.classList.toggle('active', item === tab); if (item === tab) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current'); });
     document.querySelectorAll('.admin-panel').forEach(panel => { const active = panel.id === `admin-${tab.dataset.admin}`; panel.classList.toggle('active', active); panel.hidden = !active; });
+    // Switching tabs only toggles visibility, so the live region would keep
+    // describing the list just left. Re-render the opened list so its own range
+    // is announced, and a freshly opened empty list clears the message instead.
+    const opened = { products: renderAdminProducts, orders: renderAdminOrders, inventory: renderAdminInventory,
+      customers: renderAdminCustomers, discounts: renderAdminDiscounts }[tab.dataset.admin];
+    if (opened) opened();
   }));
   document.querySelectorAll('[data-product-filter]').forEach(pill => pill.addEventListener('click', () => {
     adminProductFilter = pill.dataset.productFilter;
