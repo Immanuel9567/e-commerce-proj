@@ -464,3 +464,69 @@ test('admin customer and promotion lists search, filter and page', async ({ page
   await expect(page.locator('#adminPromoPager')).toBeHidden();
   await page.locator('[data-promo-filter="all"]').click();
 });
+
+test('keyboard users can page the admin lists without losing focus', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('[data-tab="admin"]').click();
+  await page.locator('[data-admin="products"]').click();
+  // Active, not All: archiving below has to actually shrink the visible list,
+  // and the All filter keeps archived products in view.
+  await page.locator('[data-product-filter="active"]').click();
+
+  const focused = () => page.evaluate(() => {
+    const el = document.activeElement;
+    return { tag: el.tagName, delta: el.dataset.pageDelta || null, text: (el.textContent || '').trim() };
+  });
+
+  // Activating Next with the keyboard keeps focus in the pager: the control
+  // just used is now disabled on the last page, so Previous takes over.
+  await page.locator('[data-page-target="products"][data-page-delta="1"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#adminProductPager')).toContainText('Page 2 of 2');
+  let active = await focused();
+  expect(active.tag).toBe('BUTTON');
+  expect(active.text).toBe('Previous');
+  expect(active.delta).toBe('-1');
+
+  // And back the other way, falling forward to Next.
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#adminProductPager')).toContainText('Page 1 of 2');
+  active = await focused();
+  expect(active.tag).toBe('BUTTON');
+  expect(active.text).toBe('Next');
+  expect(active.delta).toBe('1');
+
+  // Focus never lands on the body during either move.
+  const onBody = await page.evaluate(() => document.activeElement === document.body);
+  expect(onBody).toBe(false);
+
+  // A mouse click behaves the same way. Chrome focuses a button on mousedown,
+  // so the click arrives with the button already focused; the point of the
+  // assertion is that focus stays in the pager rather than falling to <body>.
+  await page.locator('[data-page-target="products"][data-page-delta="1"]').click();
+  await expect(page.locator('#adminProductPager')).toContainText('Page 2 of 2');
+  const afterClick = await focused();
+  expect(afterClick.tag).toBe('BUTTON');
+  expect(afterClick.text).toBe('Previous');
+
+  // A re-render from something other than the pager (archiving products shrinks
+  // the list under the reader) must not drop focus to the body either.
+  await page.evaluate(() => {
+    ['aura-01', 'aura-02', 'aura-03', 'aura-04', 'aura-05'].forEach(id => AppStore.archiveProduct(id));
+    renderAdminProducts();
+  });
+  await expect(page.locator('#adminProductPager')).toContainText('Page 1 of 1');
+  const afterShrink = await focused();
+  expect(afterShrink.tag).not.toBe('BODY');
+  expect(afterShrink.text).toBe('Showing 1–9 of 9 products');
+
+  // And a single-page list parks focus on the status line rather than nowhere.
+  await page.locator('#adminProductSearch').fill('flask');
+  await expect(page.locator('#adminProductPager')).toContainText('Page 1 of 1');
+  const parked = await page.evaluate(() => {
+    document.querySelector('#adminProductPager .admin-pager-status').focus();
+    return document.activeElement.className;
+  });
+  expect(parked).toBe('admin-pager-status');
+});

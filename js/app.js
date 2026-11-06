@@ -383,8 +383,15 @@ function renderAdminPanel() {
   renderAdminDiscounts();
 }
 
-function renderPager(container, state, label, reload) {
+function renderPager(container, state, label) {
   if (!container) return;
+  // Any re-render replaces these buttons, and the browser then drops focus to
+  // <body>. That happens on a pager click *and* on anything else that rerenders
+  // the list (archiving a product, saving stock, searching), so the pager
+  // remembers whether it owned focus and takes it back afterwards.
+  const focusedDelta = container.contains(document.activeElement)
+    ? document.activeElement.dataset.pageDelta || null : undefined;
+  const hadFocusInside = container.contains(document.activeElement);
   const { page, pageCount, total, start, items } = paginate(state.items, state.page, ADMIN_PAGE_SIZE);
   state.page = page;
   const first = total === 0 ? 0 : start + 1;
@@ -396,12 +403,27 @@ function renderPager(container, state, label, reload) {
     container.innerHTML = '';
     return;
   }
-  container.innerHTML = `<p class="admin-pager-status" aria-live="polite">${`Showing ${first}\u2013${last} of ${total} ${escapeHtml(label)}`}</p>
+  // tabindex="-1" so focus can be parked here when the control the reader used
+  // becomes disabled, without adding another stop to the tab order.
+  container.innerHTML = `<p class="admin-pager-status" aria-live="polite" tabindex="-1">${`Showing ${first}\u2013${last} of ${total} ${escapeHtml(label)}`}</p>
     <div class="admin-pager-controls">
       <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="-1" ${page <= 1 ? 'disabled' : ''}>Previous</button>
       <span class="admin-pager-page">Page ${page} of ${pageCount}</span>
       <button type="button" class="admin-page-btn" data-page-target="${escapeHtml(state.key)}" data-page-delta="1" ${page >= pageCount ? 'disabled' : ''}>Next</button>
     </div>`;
+  if (hadFocusInside) restorePagerFocus(container, focusedDelta);
+}
+
+// Prefer the arrow the reader was using; if it is now disabled (end of list, or
+// the list shrank under them), use the other arrow, then the status line.
+function restorePagerFocus(container, delta) {
+  const order = delta === '-1' ? ['-1', '1'] : ['1', '-1'];
+  for (const value of order) {
+    const button = container.querySelector(`[data-page-delta="${value}"]`);
+    if (button && !button.disabled) { button.focus(); return; }
+  }
+  const status = container.querySelector('.admin-pager-status');
+  if (status) status.focus();
 }
 
 let adminProductFilter = 'active';
@@ -893,6 +915,8 @@ function initEventListeners() {
     const rerender = { products: renderAdminProducts, orders: renderAdminOrders, inventory: renderAdminInventory,
       customers: renderAdminCustomers, promotions: renderAdminDiscounts }[state.key];
     state.page = Math.max(1, (state.page || 1) + Number(button.dataset.pageDelta));
+    // renderPager restores focus itself when the pager owned it, so clicks and
+    // re-renders from other actions are handled by the same path.
     rerender();
   });
   $('addProductBtn').addEventListener('click', () => openProductEditor(null));

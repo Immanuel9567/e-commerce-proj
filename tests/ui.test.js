@@ -37,7 +37,7 @@ function loadPage() {
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
   const bridge = window.document.createElement('script');
-  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts;';
+  bridge.textContent = 'window.AppStore = AppStore; window.renderAdminOrders = renderAdminOrders; window.renderCartDrawer = renderCartDrawer; window.renderAdminProducts = renderAdminProducts; window.renderAdminOrders = renderAdminOrders; window.renderAdminInventory = renderAdminInventory; window.adminListState = adminListState; window.renderProductPage = renderProductPage; window.getFilteredProducts = getFilteredProducts; window.renderAdminCustomers = renderAdminCustomers; window.renderAdminDiscounts = renderAdminDiscounts; window.restorePagerFocus = restorePagerFocus;';
   window.document.body.appendChild(bridge);
   return { window, document: window.document, errors, close: () => window.close() };
 }
@@ -383,6 +383,103 @@ test('admin promotion status filters and paging work together', () => {
     assert.equal(document.querySelectorAll('#adminPromoBody tr').length, 1);
     assert.match(document.getElementById('adminPromoBody').textContent, /BULK7/);
     assert.ok(offline);
+  } finally {
+    page.close();
+  }
+});
+
+test('paging keeps keyboard focus on the pager instead of dropping it to the body', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    // jsdom refuses to focus an element inside a hidden section, so the admin
+    // panel has to be open for these assertions to mean anything.
+    document.querySelector('[data-tab="admin"]').click();
+    document.querySelector('[data-admin="products"]').click();
+    window.renderAdminProducts();
+    document.querySelector('[data-product-filter="all"]').click();
+
+    const next = () => document.querySelector('[data-page-target="products"][data-page-delta="1"]');
+    const prev = () => document.querySelector('[data-page-target="products"][data-page-delta="-1"]');
+    assert.equal(next().disabled, false, '14 products means a second page exists');
+
+    // Enter on Next moves to the last page; Next is then disabled, so focus
+    // must fall back to Previous rather than to <body>.
+    next().focus();
+    assert.equal(document.activeElement, next(), 'focus is on Next before activating');
+    next().click();
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 2 of 2/);
+    assert.equal(next().disabled, true);
+    assert.notEqual(document.activeElement, document.body, 'focus is not dropped to the body');
+    assert.equal(document.activeElement, prev(), 'focus falls back to Previous, which is still usable');
+
+    // Going back the other way falls forward to Next.
+    prev().focus();
+    prev().click();
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 1 of 2/);
+    assert.equal(prev().disabled, true);
+    assert.equal(document.activeElement, next(), 'focus falls forward to Next');
+
+    // A click that did not have focus must not steal it.
+    const elsewhere = document.getElementById('adminProductSearch');
+    elsewhere.focus();
+    next().click();
+    assert.equal(document.activeElement, elsewhere, 'focus stays where the user left it');
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 2 of 2/, 'but the page still changed');
+  } finally {
+    page.close();
+  }
+});
+
+test('focus fallback reaches the status line when both arrows are unavailable', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    document.querySelector('[data-tab="admin"]').click();
+    document.querySelector('[data-admin="products"]').click();
+    // Narrow to a single page so neither arrow can be used after paging.
+    const search = document.getElementById('adminProductSearch');
+    search.value = 'flask';
+    search.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    const pager = document.getElementById('adminProductPager');
+    assert.match(pager.textContent, /Page 1 of 1/);
+    assert.equal(pager.querySelector('[data-page-delta="1"]').disabled, true);
+    assert.equal(pager.querySelector('[data-page-delta="-1"]').disabled, true);
+    const status = pager.querySelector('.admin-pager-status');
+    assert.equal(status.getAttribute('tabindex'), '-1', 'the status line is focusable programmatically only');
+    window.restorePagerFocus(pager, '1');
+    assert.equal(document.activeElement, status, 'focus parks on the live status line when both arrows are unusable');
+  } finally {
+    page.close();
+  }
+});
+
+test('focus survives a re-render caused by an action other than paging', () => {
+  const page = loadPage();
+  try {
+    const { window, document } = page;
+    document.querySelector('[data-tab="admin"]').click();
+    document.querySelector('[data-admin="products"]').click();
+    window.renderAdminProducts();
+
+    // Sit on the last page, then shrink the list from elsewhere, exactly as
+    // archiving several products would. The page clamps back to 1 and both
+    // arrows become unusable, so focus must land on the live status line
+    // rather than falling to <body>.
+    const next = () => document.querySelector('[data-page-target="products"][data-page-delta="1"]');
+    next().focus();
+    next().click();
+    assert.match(document.getElementById('adminProductPager').textContent, /Page 2 of 2/);
+    assert.equal(document.activeElement, document.querySelector('[data-page-target="products"][data-page-delta="-1"]'));
+
+    ['aura-01', 'aura-02', 'aura-03', 'aura-04', 'aura-05'].forEach(id => window.AppStore.archiveProduct(id));
+    window.renderAdminProducts();
+    const pager = document.getElementById('adminProductPager');
+    assert.match(pager.textContent, /of 9 products/);
+    assert.match(pager.textContent, /Page 1 of 1/);
+    assert.notEqual(document.activeElement, document.body, 'focus did not fall to the body');
+    assert.equal(document.activeElement.className, 'admin-pager-status');
   } finally {
     page.close();
   }
