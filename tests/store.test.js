@@ -400,3 +400,34 @@ test('a save written under the old brand key is adopted, not discarded', () => {
   const prefersNew = new Store(seed, both, fixedDate);
   assert.equal(prefersNew.cart.length, 0, 'the current key wins over the legacy one');
 });
+
+test('an unreadable saved state is reported instead of silently discarded', () => {
+  // A key that was never written is a first visit, not a problem.
+  assert.equal(makeStore().recovery, null, 'a first visit reports nothing');
+
+  // A value that exists but does not parse is real data that is now unreadable.
+  const corrupt = makeStore(new MemoryStorage({ [STORE_STATE_KEY]: '{"products": [broken' }));
+  assert.ok(corrupt.recovery, 'corrupt saved data is reported');
+  assert.equal(corrupt.recovery.reason, 'unreadable');
+  assert.equal(corrupt.recovery.bytes, '{"products": [broken'.length);
+  assert.equal(corrupt.products.length, seed.length, 'it falls back to seed data as before');
+
+  // A parsed value of the wrong shape also counts: the shop would otherwise look
+  // normal while every saved collection was silently missing.
+  const wrongShape = makeStore(new MemoryStorage({ [STORE_STATE_KEY]: '"just a string"' }));
+  assert.ok(wrongShape.recovery, 'a non-object saved state is reported');
+  assert.equal(wrongShape.recovery.reason, 'unexpected shape');
+
+  // Valid saved data reports nothing.
+  const storage = new MemoryStorage();
+  const healthy = new Store(seed, storage, fixedDate);
+  healthy.addToCart('one');
+  const reopened = new Store(seed, storage, fixedDate);
+  assert.equal(reopened.recovery, null, 'readable saved data reports nothing');
+  assert.equal(reopened.cart.length, 1, 'and the data really was read');
+
+  // A legacy key that migrates successfully is readable data, not a problem.
+  const migrated = new Store(seed, new MemoryStorage({ v8_store_v1: JSON.stringify({ orders: [] }) }), fixedDate);
+  assert.equal(migrated.migratedFrom, 'v8_store_v1');
+  assert.equal(migrated.recovery, null, 'a successful migration is not a recovery case');
+});

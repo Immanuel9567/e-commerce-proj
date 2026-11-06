@@ -67,6 +67,18 @@ class Store {
       }
     }
     const saved = this.read(STORE_STATE_KEY, null);
+    // A stored value that exists but does not parse, or parses to something that
+    // is not an object, used to be discarded in silence: the shop reverted to
+    // seed data and past orders were gone with no explanation. Record it so the
+    // UI can say so rather than pretend nothing happened.
+    const raw = this.readRaw(STORE_STATE_KEY);
+    this.recovery = null;
+    if (raw !== null) {
+      const unreadable = saved === null || typeof saved !== 'object';
+      if (unreadable) {
+        this.recovery = { reason: saved === null ? 'unreadable' : 'unexpected shape', bytes: raw.length };
+      }
+    }
     const source = saved && typeof saved === 'object' ? saved : {};
     const products = (Array.isArray(source.products) ? source.products : seedProducts).map(product => this.normalizeProduct(product));
     const cart = Array.isArray(source.cart) ? source.cart : this.read('aura_cart', []);

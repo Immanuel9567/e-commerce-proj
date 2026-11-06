@@ -4,6 +4,27 @@ This file records meaningful repository changes and the checks that support them
 
 ## Unreleased — 2026-11-06
 
+### Fixed — unreadable saved data vanished without a word
+
+- If the stored value was corrupt or the wrong shape, the shop **silently** reverted to seed data. Reproduced end to end: with one real order saved, corrupting the storage key and reloading left **0 orders**, no page error, and nothing on screen to suggest anything was wrong. The stored bytes were still present, so the data was recoverable while the UI implied it had never existed.
+- `Store` now records `recovery = { reason, bytes }` when a key exists but does not parse, or parses to something that is not an object. A key that was never written stays silent — a first visit is not a problem, and conflating the two would show an error banner to every new visitor.
+- The admin shows a `role="alert"` banner above the panels: *"Saved data could not be read. The catalogue and orders below are the built-in defaults, not your saved data (20 bytes stored). Nothing has been overwritten yet: saving any change will replace it."* It states the byte count so the claim is checkable, and does **not** claim the data was deleted, because it wasn't.
+
+### On loading states, deliberately not built
+
+- The Phase 3 table item asks for loading and error states. Error states now exist where failure is genuinely possible. **Loading states were not added**: local storage reads are synchronous, so there is no interval to show a spinner in, and inventing an artificial delay to make a skeleton visible would be theatre that also makes the app slower. Recorded in `ROADMAP.md` as waiting on the Phase 2 APIs rather than ticked off.
+
+### Verification — recovery state
+
+- `npm test`: **44/44**. The store test covers five cases — never written, unparseable, wrong shape, valid, and successfully migrated — and a DOM test covers the banner's wording, `role="alert"`, the byte count, dismissal, and that a re-render does not resurrect a dismissed banner.
+- Playwright: **44/44**, with a browser test that saves a real order, corrupts the real key, reloads, confirms the order really is gone, checks the banner, confirms the stored bytes are untouched, dismisses it, then confirms a clean profile shows no banner.
+- `npm run test:mutation`: **27/27 caught**. Three mutations target this: discarding unreadable data silently, mistaking a first visit for unreadable data, and never showing the banner.
+- This work previously sat unmerged in PR #13 on a branch that was abandoned; it is rebuilt here on top of the GreenCart rename, including the `migratedFrom` interaction.
+
+### Added — contributor permissions guide
+
+- `docs/CONTRIBUTOR-PERMISSIONS.md`: what a repository **contributor** can and cannot do on GitHub and Vercel, the exact errors each blocked action produces, and the workarounds that stay inside the rules. Written because the person doing this work does not own the project.
+
 ### Changed — the brand is now GreenCart
 
 - Renamed from **V8's** to **GreenCart** ahead of the domain purchase, so the address and every page agree. Seven places in `index.html` (title, brand logo and its `G` badge, aria-label, admin header kicker, footer, copyright), four `document.title` assignments in `js/app.js`, the `package.json` name, the README title and the mind map.

@@ -4,6 +4,10 @@ A runbook for moving the storefront off the free `*.vercel.app` URL onto your ow
 
 **Updated 2026-11-06.** Vercel's UI and IPs change; confirm every value on the domain card in **Project → Settings → Domains** before entering it at your registrar. The values below are Vercel's documented defaults, not a substitute for that card.
 
+> **You do not own this project.** Adding a domain in Vercel and editing DNS both require the owner, not a contributor. The steps below are written so the owner can follow them directly, or hand you the two values in step 1.2. See [`CONTRIBUTOR-PERMISSIONS.md`](CONTRIBUTOR-PERMISSIONS.md).
+
+> **Domain chosen: `shopgreencart.com`.** It is a compromise, not first choice — see [Why this domain](#why-this-domain).
+
 ---
 
 ## Before anything: decide what "live" means
@@ -23,13 +27,24 @@ These are two different launches, and confusing them is how shops take money the
 
 ---
 
+## Why this domain
+
+`greencart.com` and the short variants were taken, and `shopgreencart.com` was what Vercel offered as available. That is a workable outcome, with two things to check before money changes hands:
+
+- **Availability in Vercel is not the same as availability generally.** Vercel showing a domain as available means no *Vercel* account has it registered as a project domain — not that the name is unregistered. Confirm at a registrar that `shopgreencart.com` can actually be bought, and at what **renewal** price.
+- **Check the trademark position.** "GreenCart" is an existing grocery brand in several markets. A `.com` that reads as a variant of someone else's mark is a risk worth five minutes of searching, not a lawyer — just to know where you stand.
+
+`shopgreencart.com` is longer and has a "shop" prefix, which slightly reduces type-in traffic. It is unambiguous when spoken aloud, which `greencart`-with-a-number would not have been, so it is a reasonable trade.
+
+---
+
 ## Part 1 — Point the domain at Vercel
 
 ### 1.1 Choose the address shape
 
 Use **`www` as the address people type, with the apex redirecting to it.**
 
-Vercel recommends this because the apex (`greencart.ng`) cannot hold a CNAME, so it must use a fixed IP. `www` can follow a CNAME, letting Vercel change IPs without you touching DNS again.
+Vercel recommends this because the apex (`shopgreencart.com`) cannot hold a CNAME, so it must use a fixed IP. `www` can follow a CNAME, letting Vercel change IPs without you touching DNS again.
 
 Register both the apex and `www`. Vercel redirects one to the other.
 
@@ -63,17 +78,17 @@ Notes that matter:
 DNS is usually live in minutes, occasionally up to 48 hours.
 
 ```bash
-dig greencart.ng A +short          # expect 76.76.21.21
-dig www.greencart.ng CNAME +short  # expect cname.vercel-dns.com.
+dig shopgreencart.com A +short          # expect 76.76.21.21
+dig www.shopgreencart.com CNAME +short  # expect cname.vercel-dns.com.
 ```
 
 Then check both domains show **Valid Configuration** in Vercel. HTTPS is issued automatically once DNS resolves.
 
-In the browser: `http://greencart.ng` should redirect to `https://www.greencart.ng` with a valid padlock. Test in a private window so a cached redirect doesn't fool you.
+In the browser: `http://shopgreencart.com` should redirect to `https://www.shopgreencart.com` with a valid padlock. Test in a private window so a cached redirect doesn't fool you.
 
 ### 1.5 Set the primary domain
 
-In **Settings → Domains**, mark `www.greencart.ng` as primary and confirm the apex redirects to it. Check the URL stays on your domain rather than flipping back to `*.vercel.app`.
+In **Settings → Domains**, mark `www.shopgreencart.com` as primary and confirm the apex redirects to it. Check the URL stays on your domain rather than flipping back to `*.vercel.app`.
 
 ### 1.6 Common failures
 
@@ -146,7 +161,10 @@ Keep the registrar on a payment method you control, with 2FA on. A lapsed domain
 ## Checklist
 
 **Domain**
+- [ ] Owner available — domain add and DNS both need them, not a contributor
 - [ ] Confirmed this is a public-preview launch, not a shop taking orders
+- [ ] Confirmed `shopgreencart.com` is buyable at a registrar, at a sane renewal price
+- [ ] Checked `greencart` / `shopgreencart` for trademark conflicts
 - [ ] Domain registered, registrar 2FA on
 - [ ] Checked `greencart` for trademark conflicts
 - [ ] Read the exact values from Vercel's domain card

@@ -564,3 +564,42 @@ test('paging announces the new range through a live region that survives re-rend
   const text = await announcer.textContent();
   expect(text.trim()).toBe('');
 });
+
+test('corrupt saved data is reported in the admin instead of vanishing silently', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  // Save something real, so the loss below is observed rather than assumed.
+  const before = await page.evaluate(() => {
+    AppStore.updateStock('aura-01', 30);
+    AppStore.addToCart('aura-01');
+    AppStore.placeOrder({ name: 'Real Buyer', address: '1 St', city: 'Lagos', email: 'real@example.com', paymentMethod: 'Card' });
+    return AppStore.orders.length;
+  });
+  expect(before).toBeGreaterThan(0);
+
+  // Corrupt the real key and reload, as a half-written value would.
+  await page.evaluate(() => localStorage.setItem('greencart_store_v1', '{"products": [broken json'));
+  await page.reload();
+
+  // The order is genuinely gone: this is data loss, not a display quirk.
+  expect(await page.evaluate(() => AppStore.orders.length)).toBe(0);
+
+  await page.locator('[data-tab="admin"]').click();
+  const banner = page.locator('#adminRecovery');
+  await expect(banner).toBeVisible();
+  await expect(banner).toHaveAttribute('role', 'alert');
+  await expect(banner).toContainText('could not be read');
+  await expect(banner).toContainText('built-in defaults, not your saved data');
+  // The stored bytes are still there; the banner must not claim they were deleted.
+  expect(await page.evaluate(() => localStorage.getItem('greencart_store_v1'))).toBe('{"products": [broken json');
+
+  await page.locator('#adminRecoveryDismiss').click();
+  await expect(banner).toBeHidden();
+
+  // A clean profile shows no banner at all.
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.locator('[data-tab="admin"]').click();
+  await expect(page.locator('#adminRecovery')).toBeHidden();
+});

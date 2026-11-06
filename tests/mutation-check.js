@@ -77,6 +77,24 @@ const cases = [
     to: `lowStock: this.products.filter(product => product.stock < 5).length`
   },
   {
+    name: 'unreadable saved data is discarded silently',
+    file: 'js/store.js',
+    from: `      const unreadable = saved === null || typeof saved !== 'object';`,
+    to: `      const unreadable = false;`
+  },
+  {
+    name: 'a first visit is mistaken for unreadable saved data',
+    file: 'js/store.js',
+    from: `    if (raw !== null) {`,
+    to: `    if (true) {`
+  },
+  {
+    name: 'the recovery banner is never shown',
+    file: 'js/app.js',
+    from: `  banner.hidden = false;`,
+    to: `  banner.hidden = true;`
+  },
+  {
     name: 'a save under the old brand key is ignored',
     file: 'js/store.js',
     from: `      const legacyKey = LEGACY_STORE_STATE_KEYS.find(key => this.readRaw(key) !== null);`,

@@ -374,7 +374,20 @@ function selectPayment(button) {
   });
 }
 
+// Show the recovery notice when saved data existed but could not be read. The
+// message says plainly that what follows is seed data, because the alternative
+// is a shop that looks fine while silently missing the customer's orders.
+function renderAdminRecovery() {
+  const banner = $('adminRecovery');
+  if (!banner) return;
+  const recovery = AppStore.recovery;
+  if (!recovery || recovery.dismissed) { banner.hidden = true; return; }
+  banner.hidden = false;
+  $('adminRecoveryDetail').textContent = `The catalogue and orders below are the built-in defaults, not your saved data (${recovery.bytes} bytes stored). Nothing has been overwritten yet: saving any change will replace it.`;
+}
+
 function renderAdminPanel() {
+  renderAdminRecovery();
   renderAdminAnalytics();
   renderAdminProducts();
   renderAdminOrders();
@@ -987,6 +1000,11 @@ function initEventListeners() {
     // renderPager restores focus itself when the pager owned it, so clicks and
     // re-renders from other actions are handled by the same path.
     rerender();
+  });
+  $('adminRecoveryDismiss').addEventListener('click', () => {
+    if (AppStore.recovery) AppStore.recovery.dismissed = true;
+    renderAdminRecovery();
+    showToast('Saved data was left untouched; it will be replaced when you save a change.');
   });
   $('addProductBtn').addEventListener('click', () => openProductEditor(null));
   $('cancelProductEdit').addEventListener('click', () => { $('adminProductEditor').hidden = true; });
