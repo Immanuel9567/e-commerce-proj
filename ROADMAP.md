@@ -4,7 +4,19 @@
 
 ## Where we are
 
-The current site is a static HTML/CSS/JavaScript storefront with a browser-local admin demo. Catalog edits, cart and saved items, promotions, customers, stock, orders and order references live in the current browser's storage. The admin is not access-controlled; data does not sync across browsers or devices. Checkout, payment and refunds are simulations. Supabase is proposed in the source plan but is **not configured or integrated** here. A Vercel deployment makes the demo available online; it does not make its data shared or secure.
+The current site is a static HTML/CSS/JavaScript storefront with **a real, server-side card payment gateway** and a browser-local admin. Catalogue edits, cart and saved items, promotions, customers, stock and order references live in the current browser's storage. The admin is not access-controlled; data does not sync across browsers or devices.
+
+What is real as of 2026-11-06:
+
+- **Payments.** `api/initialize-payment.js` prices the order server-side and `api/verify-payment.js` confirms the charge with Paystack. A signed webhook covers the case where the browser disappears. The browser cannot set a price or declare a payment successful.
+- **Money is in naira by default** with a USD switch; catalogue prices are stored in USD and converted for display only, at a pinned and dated rate.
+
+What is **not** real, and must not be described as if it were:
+
+- **A paid order is stored only in the buyer's browser.** There is no database, so the seller does not receive the order. The webhook logs the confirmed payment and reports `persisted: false`. Sales are recoverable from the Paystack dashboard and nowhere else.
+- **Payments are off in the committed config.** `payments.publicKey` is empty, so the checkout refuses rather than pretending. Switching it on needs the owner's Paystack account (see [docs/PAYMENTS.md](docs/PAYMENTS.md)).
+- **The admin is public** to anyone who knows the URL. It is out of the public nav for tidiness, not by way of security.
+- Supabase is proposed in the source plan but is **not configured or integrated**. The missing database is the single biggest gap between this and a store that can be left unattended.
 
 The source plan's schema → security → APIs → admin lists → forms → analytics sequence is retained below. The current local UI is a prototype to preserve and adapt, not proof that the future backend phases are complete.
 
@@ -22,6 +34,8 @@ Completed work that is **not** a roadmap phase, recorded so the current state is
 | 2026-11-05 | All 14 built-in product images are now local generated assets; the 8 Unsplash hotlinks are gone and a test enforces local files | `js/products.js`, `assets/images/`, `tests/store.test.js` | Done — not deployed |
 | 2026-11-05 | Playwright suite made runnable in the sandbox via an npm-shipped Chromium 153 and its libraries; fallback tests rewritten to force a real load failure | `README.md`, `tests/e2e/product-page.spec.js` | Done — full suite green, **38/38** |
 | 2026-11-05 | PR #5 merged to `main` (`8ae06a5`); production deploy verified to serve local images and both fixes | — | Done — live at e-commerce-proj-umber.vercel.app |
+| 2026-11-06 | Card payment gateway (`api/`), server-side pricing, signed webhook, naira/USD display currency, honest checkout, legal pages, SEO assets, `docs/PAYMENTS.md` | `api/`, `js/currency.js`, `js/payments.js`, `js/config.js`, `legal/`, `docs/PAYMENTS.md` | Done — **payments off until an owner public key is added** |
+| 2026-11-06 | Buyer-facing order records still browser-only; webhook confirms payments but persists nothing | `api/paystack-webhook.js` | **Open** — needs the Phase 1 database |
 | 2026-11-05 | CI workflow prepared to run `npm test` and `npm run test:e2e` on PRs and pushes to `main` | `ci/tests.yml`, `ci/README.md` | **Blocked** — repo connection cannot write `.github/workflows/`; needs owner to move the file into place |
 | 2026-11-05 | Products can be archived and restored instead of deleted; permanent deletion is archived-only and refused for products with past orders; admin status filter and a retired-product page added | `js/store.js`, `js/app.js`, `index.html`, `css/style.css`, `tests/` | Done — merged in PR #6 (`b01ac14`), verified live |
 | 2026-11-05 | Production deploy verified for PR #6: archiving, discount, status/refund rules and local images all live | — | Done — Admin archive UI could not be clicked from here |

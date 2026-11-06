@@ -31,8 +31,11 @@ function loadPage() {
     script.textContent = fs.readFileSync(path.join(root, file), 'utf8');
     window.document.body.appendChild(script);
   };
+  inject('js/config.js');
+  inject('js/currency.js');
   inject('js/products.js');
   inject('js/store.js');
+  inject('js/payments.js');
   inject('js/app.js');
   // Top-level `const` bindings are not placed on `window`, so expose the public
   // handles the tests need through a small bridge.
@@ -53,7 +56,11 @@ test('the storefront renders products, categories and empty account state', () =
     assert.equal(document.querySelectorAll('.cat-pill').length, 6);
     assert.match(document.getElementById('resultsCount').textContent, /Showing 14 objects/);
     assert.equal(document.getElementById('navCartBadge').textContent, '0');
-    assert.match(document.getElementById('featuredPrice').textContent, /\$299/);
+    // The store opens in naira, so the featured $299 converts at the pinned rate.
+    assert.match(document.getElementById('featuredPrice').textContent, /^₦403,058$/);
+    page.window.GreenCartCurrency.set('USD');
+    page.window.renderProductGrid();
+    assert.match(document.getElementById('featuredPrice').textContent, /^\$299\.00$/);
   } finally {
     page.close();
   }
@@ -112,6 +119,9 @@ test('a checkout with a half-cent promotion discount shows the rounded total', (
     store.saveProduct({ id: 'aura-14', title: 'Minimalist Matte Thermal Flask', category: 'living', price: 4.10, stock: 5, description: 'Rounding probe' });
     store.addToCart('aura-14');
     store.applyPromo('GC15');
+    // Rounding to the cent only exists in USD; the store now opens in naira,
+    // where prices render as whole naira and a half cent is not representable.
+    window.GreenCartCurrency.set('USD');
     window.renderCartDrawer();
     assert.match(document.getElementById('cartDiscount').textContent.trim(), /^−\$0\.62/);
     const totals = store.getCartTotals();

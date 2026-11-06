@@ -409,7 +409,16 @@ class Store {
       shipping: totals.shipping,
       total: totals.total,
       promotionCode: totals.promotion ? totals.promotion.code : '',
-      paymentMethod: String(details.paymentMethod || 'Apple Pay')
+      paymentMethod: String(details.paymentMethod || 'Card'),
+      // Payment state is recorded, never inferred. 'none' means no provider was
+      // involved; 'paid' only ever comes from a server that verified the charge.
+      payment: details.payment && typeof details.payment === 'object'
+        ? {
+            provider: String(details.payment.provider || ''),
+            reference: String(details.payment.reference || ''),
+            status: ['paid', 'unverified', 'none'].includes(details.payment.status) ? details.payment.status : 'unverified'
+          }
+        : { provider: '', reference: '', status: 'none' }
     };
     const products = this.products.map(product => {
       const sold = items.filter(item => item.id === product.id).reduce((sum, item) => sum + item.quantity, 0);

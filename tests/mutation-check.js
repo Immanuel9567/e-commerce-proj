@@ -189,6 +189,50 @@ const cases = [
     file: 'js/store.js',
     from: `    if (quantity > available) throw new Error(available > 0 ? \`Only \${available} more available.\` : 'No more of this item are available.');`,
     to: ``
+  },
+  {
+    name: 'naira prices are converted without the pinned rate',
+    file: 'js/currency.js',
+    from: `    return value * rate;`,
+    to: `    return value;`
+  },
+  {
+    name: 'a payment is marked paid without asking the server',
+    file: 'js/payments.js',
+    from: `                if (result.verified) {`,
+    to: `                if (true) {`
+  },
+  {
+    name: 'checkout proceeds even though payments are switched off',
+    file: 'js/app.js',
+    from: `  if (!status.enabled) {`,
+    to: `  if (false) {`
+  },
+  {
+    name: 'dollars are turned into kobo without going through naira',
+    file: 'api/_lib/pricing.js',
+    from: `  return Math.round(Number(usdAmount) * NGN_PER_USD * 100);`,
+    to: `  return Math.round(Number(usdAmount) * 100);`
+  },
+  {
+    name: 'the webhook accepts a request with no valid signature',
+    file: 'api/paystack-webhook.js',
+    from: `  if (!authentic) {`,
+    to: `  if (false) {`
+  },
+  {
+    name: 'verification accepts an amount different from the quote',
+    file: 'api/verify-payment.js',
+    from: `  if (Number.isFinite(expectedKobo) && expectedKobo > 0 && Number(transaction.amount) !== expectedKobo) {`,
+    to: `  if (false) {`
+  },
+  {
+    name: 'a secret key pasted into the public config is shipped anyway',
+    file: 'js/payments.js',
+    from: `    if (keyLooksSecret(PUBLIC_KEY)) {
+      return { enabled: false, reason: 'secret-key-in-config' };
+    }`,
+    to: ''
   }
 ];
 

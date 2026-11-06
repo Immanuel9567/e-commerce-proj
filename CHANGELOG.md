@@ -2,6 +2,44 @@
 
 This file records meaningful repository changes and the checks that support them. See [agent.md](agent.md) for the required entry and handoff rules. Dates use the owner's local date; `Unreleased` means the work is not yet part of a named release.
 
+## Unreleased — 2026-11-06 (later)
+
+### Added — a real card payment gateway, honest until switched on
+
+- **Server-side pricing.** The browser now sends `[{id, quantity}]` and the server prices the order from `js/products.js`. A tampered request cannot buy a ₦403,058 item for ₦100. `api/_lib/pricing.js` reuses the store's own `Store` class, so the discount and shipping rules have exactly one implementation rather than two that drift.
+- **`POST /api/initialize-payment`** prices the bag, refuses unknown/oversized/out-of-stock lines, and asks Paystack for a transaction with the amount it computed. The quoted amount in kobo travels inside `metadata.expectedKobo`.
+- **`POST /api/verify-payment`** is the only code allowed to say money moved. It re-checks with Paystack that the transaction succeeded, that the currency is NGN, and that the amount equals the quote. A cheaper transaction cannot settle an expensive order.
+- **`POST /api/paystack-webhook`** is signature-checked (HMAC-SHA512, constant-time compare) and re-verifies the transaction rather than trusting the payload. Vercel's body parser is disabled for this endpoint, because a re-serialised body can never match the signature — a trap that would have silently rejected every real webhook.
+- **Prices now display in naira by default**, with a header switch to US dollars. Catalogue prices stay in USD; conversion is display-only, so changing currency cannot change what an order is worth. Rate pinned at **₦1,348.02 per $1**, checked 2026-11-06 against exchangerate-api.
+
+### Fixed — three ways the storefront was willing to lie
+
+- **The favicon still showed the old brand's `V`.** It is an inline `data:` URI, so every text-based rebrand search missed it. Now `G`, plus a real `favicon.svg`.
+- **Every order reference was minted `AURA-YYYY-XXXX`** — the old brand on every customer receipt. Now `GC-`. Default promotion `AURA15` → `GC15`; the theme storage key moved from `aura_theme` to `greencart_theme`, reading the legacy value once so an existing visitor keeps their choice.
+- **Three fake payment buttons (`Apple Pay`, `Credit card`, `Crypto / BTC`) collected nothing** while the form said orders were placed. They are gone. One `Card` option remains, and with no public key configured the checkout states that payments are not switched on and **refuses to create an order** — verified in a real browser: the toast appears and `orders.length` stays 0.
+
+### Added — go-live essentials
+
+- `legal/shipping.html`, `privacy.html`, `terms.html`, `contact.html`, linked from the footer. Every unknown — delivery windows, return window, business name, address, contact channels — is marked `PLACEHOLDER — REPLACE BEFORE TAKING REAL ORDERS` in a red callout rather than invented.
+- `robots.txt`, `sitemap.xml`, `favicon.svg`, canonical URL, Open Graph and Twitter metadata, `vercel.json` with security headers and `no-store` on `/api/*`.
+- Admin removed from the public nav (reachable with `?admin=1`). This is convenience, not security: anyone with the URL can still open it. Stated as such in the code.
+
+### Fixed — accessibility regression introduced by the new header control
+
+- Adding the currency switch pushed the header to 366px inside a 320px viewport, breaking horizontal scroll on small phones. The theme switch keeps its symbol and its accessible name; its words move to a visually-hidden span below 480px. Re-measured at 320/360/390/420/480/680/820/1100/1440px: all `scrollWidth` values now equal the viewport.
+
+### Verification — overhaul
+
+- `npm test`: **76/76** (was 44). New: 12 checkout-honesty tests and 20 gateway tests. The gateway tests focus on refusal — forged webhook signatures, wrong currency, amount mismatch, pre-parsed bodies, missing secret key, out-of-stock lines — because a gateway that is generous with bad input is worse than one that is down.
+- Playwright: **47/47**. New `currency.spec.js` covers the naira default, the switch, persistence across reload, and that a naira order is still recorded against the same dollar value.
+- Mutations: **34/34 caught** (was 27). One survived on the first run — *"checkout proceeds even though payments are switched off"* — because the test counted orders, and removing the guard still produced zero orders via a different path. The test now asserts the provider is never contacted, which is the property that actually matters. Fixed rather than deleted.
+- `docs/PAYMENTS.md` documents the Paystack account creation, which key may be public, where the secret key goes, how to test, and what is still missing.
+
+### Still not real
+
+- **A paid order is still recorded only in the buyer's browser.** The webhook confirms the payment to the server and reports `persisted: false`; it does not pretend to have saved an order. Sales are recoverable from the Paystack dashboard until a database exists (`ROADMAP.md` Phase 1–2).
+- Payments remain **off in the committed config**: `payments.publicKey` is empty, so the checkout refuses. Switching it on needs the owner's Paystack account (see `docs/PAYMENTS.md`).
+
 ## Unreleased — 2026-11-06
 
 ### Fixed — unreadable saved data vanished without a word
